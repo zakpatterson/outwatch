@@ -1,6 +1,8 @@
 package outwatch
 
 import cats.effect.IO
+import cats.syntax.traverse._
+import cats.instances.list._
 import outwatch.dom.{ChildStreamReceiver, ChildrenStreamReceiver, CompositeModifier, Observable, StringModifier, VDomModifier, VNode}
 
 trait AsVDomModifier[-T] {
@@ -10,7 +12,7 @@ trait AsVDomModifier[-T] {
 object AsVDomModifier {
 
   implicit def seqModifier[T](implicit vm: AsVDomModifier[T]): AsVDomModifier[Seq[T]] =
-    (value: Seq[T]) => value.map(vm.asVDomModifier).sequence.map(CompositeModifier)
+    (value: Seq[T]) => value.toList.traverse(vm.asVDomModifier).map(CompositeModifier)
 
   implicit def optionModifier[T](implicit vm: AsVDomModifier[T]): AsVDomModifier[Option[T]] =
     (value: Option[T]) => value.map(vm.asVDomModifier) getOrElse VDomModifier.empty

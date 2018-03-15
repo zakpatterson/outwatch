@@ -20,6 +20,8 @@ trait ManagedSubscriptions {
 
   def managed(sub1: IO[Cancelable], sub2: IO[Cancelable], subscriptions: IO[Cancelable]*)(implicit s: Scheduler): VDomModifier = {
 
+    import cats.implicits._
+
     (sub1 :: sub2 :: subscriptions.toList).sequence.flatMap { subs: Seq[Cancelable] =>
       val composite = CompositeCancelable(subs: _*)
       Sink.create[dom.Element]{ _ =>

@@ -1,6 +1,7 @@
 package outwatch
 
 import cats.effect.IO
+import cats.implicits._
 
 package object dom extends Implicits with ManagedSubscriptions with SideEffects {
 
@@ -9,7 +10,8 @@ package object dom extends Implicits with ManagedSubscriptions with SideEffects 
   object VDomModifier {
     val empty: VDomModifier = IO.pure(EmptyModifier)
 
-    def apply(modifiers: VDomModifier*): VDomModifier = modifiers.sequence.map(CompositeModifier)
+    def apply(modifiers: VDomModifier*): VDomModifier =
+      modifiers.toList.sequence.map(CompositeModifier)
   }
 
   type Observable[+A] = monix.reactive.Observable[A]
