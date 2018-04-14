@@ -6,7 +6,8 @@ import monix.execution.cancelables.SingleAssignCancelable
 import org.scalajs.dom
 import outwatch.dom._
 import snabbdom._
-
+import cats.syntax.apply._
+import cats.effect.IO
 import scala.collection.breakOut
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
@@ -102,27 +103,27 @@ private[outwatch] trait SnabbdomHooks { self: SeparatedHooks =>
     hooks: Seq[InsertHook]
   )(implicit s: Scheduler): Hooks.HookSingleFn = (proxy: VNodeProxy) => {
 
-    def toProxy(state: VNodeState): VNodeProxy = {
+    def toProxy(state: VNodeState): IO[VNodeProxy] = {
       val newData = SeparatedAttributes.from(state.attributes.values.toSeq).updateDataObject(proxy.data)
 
       if (state.nodes.isEmpty) {
         if (proxy.children.isDefined) {
-          hFunction(proxy.sel, newData, proxy.children.get)
+          IO.pure(hFunction(proxy.sel, newData, proxy.children.get))
         } else {
-          hFunction(proxy.sel, newData, proxy.text)
+          IO.pure(hFunction(proxy.sel, newData, proxy.text))
         }
       } else {
-        val nodes = state.nodes.reduceLeft(_ ++ _)
-        hFunction(proxy.sel, newData, nodes.map(_.unsafeRunSync().toSnabbdom)(breakOut): js.Array[VNodeProxy])
+        val nodes = state.nodes.reduceLeft(_ ++ _).sequence
+        nodes.map(list => hFunction(proxy.sel, newData, list.map(_.toSnabbdom).toJSArray))
       }
     }
 
     subscription := receivers.observable
       .map(toProxy)
-      .startWith(Seq(proxy))
+      .startWith(Seq(IO.pure(proxy)))
       .bufferSliding(2, 1)
       .subscribe(
-        { case Seq(old, crt) => patch(old, crt); Continue },
+        { case Seq(old, crt) => (old, crt).mapN(patch.apply).unsafeRunSync(); Continue },
         error => dom.console.error(error.getMessage + "\n" + error.getStackTrace.mkString("\n"))
       )
 
