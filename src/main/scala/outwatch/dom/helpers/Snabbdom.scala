@@ -7,7 +7,8 @@ import org.scalajs.dom
 import outwatch.dom._
 import snabbdom._
 import cats.syntax.apply._
-import cats.effect.IO
+import cats.effect.{Effect, IO}
+
 import scala.collection.breakOut
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
@@ -117,13 +118,17 @@ private[outwatch] trait SnabbdomHooks { self: SeparatedHooks =>
         nodes.map(list => hFunction(proxy.sel, newData, list.map(_.toSnabbdom).toJSArray))
       }
     }
+    def unsafeRunSync[F[_]: Effect, A](fa: F[A]): A = IO.async[A] { cb =>
+      Effect[F].runAsync(fa)(eta => IO(cb(eta)))
+    }.unsafeRunSync()
+
 
     subscription := receivers.observable
       .map(toProxy)
       .startWith(Seq(IO.pure(proxy)))
       .bufferSliding(2, 1)
       .subscribe(
-        { case Seq(old, crt) => (old, crt).mapN(patch.apply).unsafeRunSync(); Continue },
+        { case Seq(old, crt) => (old, crt).mapN(patch.apply).unsafeRunSync; Continue },
         error => dom.console.error(error.getMessage + "\n" + error.getStackTrace.mkString("\n"))
       )
 
