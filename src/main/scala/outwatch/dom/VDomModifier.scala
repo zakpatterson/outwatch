@@ -142,7 +142,7 @@ object StaticVNode {
   val empty: StaticVNode = StringVNode("")
 }
 
-private[outwatch] final case class ModifierStreamReceiver(stream: Observable[VDomModifier]) extends AnyVal with ChildVNode
+final case class ModifierStreamReceiver(stream: Observable[VDomModifier], defaultValue: Modifier = EmptyModifier) extends ChildVNode
 
 // Static Nodes
 private[outwatch] final case class StringVNode(string: String) extends AnyVal with StaticVNode {

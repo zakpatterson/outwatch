@@ -33,11 +33,11 @@ object AsVDomModifier {
   }
 
   implicit object LongAsVDomModifier extends AsVDomModifier[Long] {
-    def asVDomModifier(value: Long): VDomModifier = IO.pure(StringModifier(value.toString))
+    def asVDomModifier(value: Long): VDomModifier = IO.pure(StringVNode(value.toString))
   }
 
   implicit object BooleanAsVDomModifier extends AsVDomModifier[Boolean] {
-    def asVDomModifier(value: Boolean): VDomModifier = IO.pure(StringModifier(value.toString))
+    def asVDomModifier(value: Boolean): VDomModifier = IO.pure(StringVNode(value.toString))
   }
 
   implicit object ObservableRender extends AsVDomModifier[Observable[VDomModifier]] {

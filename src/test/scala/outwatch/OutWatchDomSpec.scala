@@ -1001,6 +1001,44 @@ class OutWatchDomSpec extends JSDomSpec {
     element.innerHTML shouldBe """<div><span>the end</span></div>"""
   }
 
+  it should "work for nested modifier stream receiver and default value" in {
+    val myHandler = Handler.create[VDomModifier]().unsafeRunSync()
+    val node = div(id := "strings",
+      div(IO.pure(ModifierStreamReceiver(myHandler, VDomModifier("initial").unsafeRunSync)))
+    )
+
+    OutWatch.renderInto("#app", node).unsafeRunSync()
+
+    val element = document.getElementById("strings")
+    element.innerHTML shouldBe "<div>initial</div>"
+
+    val innerHandler = Handler.create[VDomModifier]().unsafeRunSync()
+    myHandler.unsafeOnNext(IO.pure(ModifierStreamReceiver(innerHandler, VDomModifier("initial2").unsafeRunSync)))
+    element.innerHTML shouldBe """<div>initial2</div>"""
+
+    innerHandler.unsafeOnNext(VDomModifier(cls := "hans", "1"))
+    element.innerHTML shouldBe """<div class="hans">1</div>"""
+
+    val innerHandler2 = Handler.create[VDomModifier]().unsafeRunSync()
+    myHandler.unsafeOnNext(IO.pure(ModifierStreamReceiver(innerHandler2, VDomModifier("initial3").unsafeRunSync)))
+    element.innerHTML shouldBe """<div>initial3</div>"""
+
+    myHandler.unsafeOnNext(IO.pure(CompositeModifier(ModifierStreamReceiver(innerHandler2, VDomModifier("initial4").unsafeRunSync) :: Nil)))
+    element.innerHTML shouldBe """<div>initial4</div>"""
+
+    myHandler.unsafeOnNext(IO.pure(CompositeModifier(StringModifier("pete") :: ModifierStreamReceiver(innerHandler2) :: Nil)))
+    element.innerHTML shouldBe """<div>pete</div>"""
+
+    innerHandler2.unsafeOnNext(VDomModifier(id := "dieter", "r"))
+    element.innerHTML shouldBe """<div id="dieter">peter</div>"""
+
+    innerHandler.unsafeOnNext(b("me?"))
+    element.innerHTML shouldBe """<div id="dieter">peter</div>"""
+
+    myHandler.unsafeOnNext(span("the end"))
+    element.innerHTML shouldBe """<div><span>the end</span></div>"""
+  }
+
   it should "work for nested observables with seq modifiers " in {
     val innerHandler = Handler.create("b").unsafeRunSync()
     val outerHandler = Handler.create(Seq[VDomModifier]("a", data.test := "v", innerHandler)).unsafeRunSync
