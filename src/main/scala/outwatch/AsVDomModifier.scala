@@ -2,7 +2,7 @@ package outwatch
 
 import cats.effect.IO
 import monix.reactive.Observable
-import outwatch.dom.{CompositeModifier, ModifierStreamReceiver, StringModifier, VDomModifier}
+import outwatch.dom.{CompositeModifier, ModifierStreamReceiver, StringVNode, VDomModifier}
 
 trait AsVDomModifier[-T] {
   def asVDomModifier(value: T): VDomModifier
@@ -21,15 +21,15 @@ object AsVDomModifier {
   }
 
   implicit object StringAsVDomModifier extends AsVDomModifier[String] {
-    def asVDomModifier(value: String): VDomModifier = IO.pure(StringModifier(value))
+    def asVDomModifier(value: String): VDomModifier = IO.pure(StringVNode(value))
   }
 
   implicit object IntAsVDomModifier extends AsVDomModifier[Int] {
-    def asVDomModifier(value: Int): VDomModifier = IO.pure(StringModifier(value.toString))
+    def asVDomModifier(value: Int): VDomModifier = IO.pure(StringVNode(value.toString))
   }
 
   implicit object DoubleAsVDomModifier extends AsVDomModifier[Double] {
-    def asVDomModifier(value: Double): VDomModifier = IO.pure(StringModifier(value.toString))
+    def asVDomModifier(value: Double): VDomModifier = IO.pure(StringVNode(value.toString))
   }
 
   implicit object LongAsVDomModifier extends AsVDomModifier[Long] {
