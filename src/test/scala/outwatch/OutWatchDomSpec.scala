@@ -1002,8 +1002,12 @@ class OutWatchDomSpec extends JSDomSpec {
   }
 
   it should "work for nested modifier stream receiver and default value" in {
+    var numPatches = 0
     val myHandler = Handler.create[VDomModifier]().unsafeRunSync()
     val node = div(id := "strings",
+      onUpdate --> sideEffect { (e1, e2) =>
+        numPatches += 1
+      },
       div(IO.pure(ModifierStreamReceiver(myHandler, VDomModifier("initial").unsafeRunSync)))
     )
 
@@ -1011,32 +1015,41 @@ class OutWatchDomSpec extends JSDomSpec {
 
     val element = document.getElementById("strings")
     element.innerHTML shouldBe "<div>initial</div>"
+    // numPatches shouldBe 0
 
-    val innerHandler = Handler.create[VDomModifier]().unsafeRunSync()
-    myHandler.unsafeOnNext(IO.pure(ModifierStreamReceiver(innerHandler, VDomModifier("initial2").unsafeRunSync)))
-    element.innerHTML shouldBe """<div>initial2</div>"""
+    val innerHandler = Handler.create[Attribute]().unsafeRunSync()
+    myHandler.unsafeOnNext(IO.pure(AttributeStreamReceiver("attr", innerHandler, Attribute("initial", "2"))))
+    element.innerHTML shouldBe """<div initial="2"></div>"""
+    // numPatches shouldBe 1
 
-    innerHandler.unsafeOnNext(VDomModifier(cls := "hans", "1"))
-    element.innerHTML shouldBe """<div class="hans">1</div>"""
+    innerHandler.unsafeOnNext(Attribute("attr", "3"))
+    element.innerHTML shouldBe """<div attr="3"></div>"""
+    // numPatches shouldBe 2
 
     val innerHandler2 = Handler.create[VDomModifier]().unsafeRunSync()
     myHandler.unsafeOnNext(IO.pure(ModifierStreamReceiver(innerHandler2, VDomModifier("initial3").unsafeRunSync)))
     element.innerHTML shouldBe """<div>initial3</div>"""
+    // numPatches shouldBe 3
 
     myHandler.unsafeOnNext(IO.pure(CompositeModifier(ModifierStreamReceiver(innerHandler2, VDomModifier("initial4").unsafeRunSync) :: Nil)))
     element.innerHTML shouldBe """<div>initial4</div>"""
+    // numPatches shouldBe 4
 
     myHandler.unsafeOnNext(IO.pure(CompositeModifier(StringModifier("pete") :: ModifierStreamReceiver(innerHandler2) :: Nil)))
     element.innerHTML shouldBe """<div>pete</div>"""
+    // numPatches shouldBe 5
 
     innerHandler2.unsafeOnNext(VDomModifier(id := "dieter", "r"))
     element.innerHTML shouldBe """<div id="dieter">peter</div>"""
+    // numPatches shouldBe 6
 
-    innerHandler.unsafeOnNext(b("me?"))
+    innerHandler.unsafeOnNext(Attribute("me", "?"))
     element.innerHTML shouldBe """<div id="dieter">peter</div>"""
+    // numPatches shouldBe 6
 
     myHandler.unsafeOnNext(span("the end"))
     element.innerHTML shouldBe """<div><span>the end</span></div>"""
+    // numPatches shouldBe 7
   }
 
   it should "work for nested observables with seq modifiers " in {

@@ -226,13 +226,24 @@ private[outwatch] final case class Receivers(
   attributeStreamReceivers: List[AttributeStreamReceiver]
 ) {
 
-  private val childNodes = children match {
-    case Children.VNodes(nodes, /*hasStream =*/ true) => nodes // only interested if there are dynamic nodes
-    case _ => Nil
-  }
-
   private val uniqueAttributeReceivers: List[AttributeStreamReceiver] = attributeStreamReceivers
     .groupBy(_.attribute).values.map(_.last)(breakOut)
+
+  private val childNodes = {
+  // only interested if there is dynamic content
+    if (uniqueAttributeReceivers.isEmpty) {
+      children match {
+        case Children.VNodes(nodes, /*hasStream =*/ true) => nodes
+        case _ => Nil
+      }
+    } else {
+      children match {
+        case Children.VNodes(nodes, _) => nodes
+        case Children.StringModifiers(modifiers) => modifiers
+        case Children.Empty => Nil
+      }
+    }
+  }
 
   private lazy val streamableModifiers = new StreamableModifiers(childNodes ++ uniqueAttributeReceivers)
   def initialState: Array[Modifier] = streamableModifiers.initialModifiers

@@ -271,16 +271,7 @@ private[outwatch] trait SnabbdomModifiers { self: SeparatedModifiers =>
       case Children.StringModifiers(textChildren) =>
         hFunction(nodeType, dataObject, textChildren.map(_.string).mkString)
       case Children.Empty =>
-        previousProxy match {
-          //This is necessary for a vnode that has only static nodes but
-          //attribute stream receivers. Then Receivers has no nodes but only
-          //attributes from the attribute streams in its Observable[Array[Modifier]].
-          //So, if the previous proxy has children but the new children are empty,
-          //then we have exactly this case and keep the previous children.
-          case Some(proxy) if proxy.children.isDefined => hFunction(nodeType, dataObject, proxy.children.get)
-          case Some(proxy) if proxy.text.isDefined => hFunction(nodeType, dataObject, proxy.text)
-          case _ => hFunction(nodeType, dataObject)
-        }
+        hFunction(nodeType, dataObject)
     }
 
     // we directly update this dataobject with default values from the receivers
