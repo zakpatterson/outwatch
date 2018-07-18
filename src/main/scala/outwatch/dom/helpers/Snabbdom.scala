@@ -284,7 +284,7 @@ private[outwatch] trait SnabbdomModifiers { self: SeparatedModifiers =>
     }
 
     // we directly update this dataobject with default values from the receivers
-    receivers.fold(initialProxy)(r => SeparatedModifiers.from(r.initialState).updateSnabbdom(initialProxy))
+    receivers.fold(initialProxy)(r => if (r.nonEmpty) SeparatedModifiers.from(r.initialState).updateSnabbdom(initialProxy) else initialProxy)
   }
 
   private[outwatch] def updateSnabbdom(previousProxy: VNodeProxy)(implicit scheduler: Scheduler): VNodeProxy = toProxy(previousProxy.sel, Some(previousProxy))
