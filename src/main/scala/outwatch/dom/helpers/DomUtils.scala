@@ -167,7 +167,12 @@ private[outwatch] class StreamableModifiers(modifiers: Seq[Modifier]) {
 
       ContentKind.Dynamic(observable, value)
     case AttributeStreamReceiver(_, attributeStream, defaultValue) =>
-      ContentKind.Dynamic(attributeStream, defaultValue)
+      val value = handleStreamedModifier(defaultValue) match {
+        case ContentKind.Dynamic(_, defaultValue) => defaultValue
+        case ContentKind.Static(mod) => mod
+      }
+
+      ContentKind.Dynamic(attributeStream, value)
     case CompositeModifier(modifiers) if (modifiers.nonEmpty) =>
       val streamableModifiers = new StreamableModifiers(modifiers)
       if (streamableModifiers.updaterObservables.isEmpty) {
