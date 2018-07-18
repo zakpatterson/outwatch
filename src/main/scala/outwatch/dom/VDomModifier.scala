@@ -53,7 +53,7 @@ sealed trait Property extends Modifier
 final case class Emitter(eventType: String, trigger: Event => Future[Ack]) extends Modifier
 
 //TODO: the only difference to a ModifierStreamReceiver: it can be grouped by its attribute name and the only the last stream is taken into account. Is this a benefit or can we remove it?
-private[outwatch] final case class AttributeStreamReceiver(attribute: String, attributeStream: Observable[Attribute]) extends Modifier
+private[outwatch] final case class AttributeStreamReceiver(attribute: String, attributeStream: Observable[Attribute], defaultValue: Modifier = EmptyModifier) extends Modifier
 
 private[outwatch] final case class CompositeModifier(modifiers: Seq[Modifier]) extends Modifier
 
@@ -141,6 +141,7 @@ private[outwatch] sealed trait StaticVNode extends Any with ChildVNode {
 object StaticVNode {
   val empty: StaticVNode = StringVNode("")
 }
+
 
 final case class ModifierStreamReceiver(stream: Observable[VDomModifier], defaultValue: Modifier = EmptyModifier) extends ChildVNode
 
