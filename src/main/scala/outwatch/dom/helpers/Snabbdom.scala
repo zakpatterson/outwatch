@@ -121,7 +121,14 @@ private[outwatch] trait SnabbdomHooks { self: SeparatedHooks =>
       .map(toProxy)
       .scan(proxy) { case (old, crt) =>
         OutwatchTracing.patchSubject.onNext((old, crt))
-        patch(old, crt)
+        val next = patch(old, crt)
+        proxy.sel = next.sel
+        proxy.data = next.data
+        proxy.children = next.children
+        proxy.elm = next.elm
+        proxy.text = next.text
+        proxy.key = next.key
+        next
       }
       .subscribe(
         _ => Continue,
