@@ -139,8 +139,7 @@ private[outwatch] class StreamableModifiers(modifiers: Seq[Modifier]) {
         ContentKind.Static(CompositeModifier(modifiers))
       } else {
         ContentKind.Dynamic(
-          streamableModifiers.observable
-            .map(CompositeModifier(_)),
+          streamableModifiers.observable.map(CompositeModifier(_)),
           CompositeModifier(streamableModifiers.initialModifiers))
       }
 
