@@ -1114,12 +1114,14 @@ class OutWatchDomSpec extends JSDomSpec {
     numPatches shouldBe 11
   }
 
-  it should "work for modifier stream receiver and streaming default value" in {
+  it should "work for modifier stream receiver and streaming default value (subscriptions are canceled properly)" in {
     val myHandler = Handler.create[VDomModifier]().unsafeRunSync()
     val innerHandler = Handler.create[VDomModifier]().unsafeRunSync()
+    val outerTriggers = new scala.collection.mutable.ArrayBuffer[VDomModifier]
+    val innerTriggers = new scala.collection.mutable.ArrayBuffer[VDomModifier]
     val node = div(id := "strings",
       div(
-        IO.pure(ModifierStreamReceiver(myHandler, ModifierStreamReceiver(innerHandler, StringVNode("initial"))))
+        IO.pure(ModifierStreamReceiver(myHandler.map { x => outerTriggers += x; x }, ModifierStreamReceiver(innerHandler.map { x => innerTriggers += x; x }, StringVNode("initial"))))
       )
     )
 
@@ -1127,37 +1129,91 @@ class OutWatchDomSpec extends JSDomSpec {
 
     val element = document.getElementById("strings")
     element.innerHTML shouldBe "<div>initial</div>"
+    outerTriggers.size shouldBe 0
+    innerTriggers.size shouldBe 0
 
     innerHandler.unsafeOnNext(VDomModifier("hi!"))
     element.innerHTML shouldBe """<div>hi!</div>"""
+    outerTriggers.size shouldBe 0
+    innerTriggers.size shouldBe 1
+
+    myHandler.unsafeOnNext(VDomModifier("test"))
+    element.innerHTML shouldBe """<div>test</div>"""
+    outerTriggers.size shouldBe 1
+    innerTriggers.size shouldBe 1
 
     myHandler.unsafeOnNext(IO.pure(ModifierStreamReceiver(Observable.empty, Attribute("initial", "2"))))
     element.innerHTML shouldBe """<div initial="2"></div>"""
+    outerTriggers.size shouldBe 2
+    innerTriggers.size shouldBe 1
 
     innerHandler.unsafeOnNext(VDomModifier("me?"))
     element.innerHTML shouldBe """<div initial="2"></div>"""
+    outerTriggers.size shouldBe 2
+    innerTriggers.size shouldBe 1
 
-    myHandler.unsafeOnNext(IO.pure(ModifierStreamReceiver(innerHandler, EmptyModifier)))
+    myHandler.unsafeOnNext(IO.pure(ModifierStreamReceiver(innerHandler.map { x => innerTriggers += x; x }, EmptyModifier)))
     element.innerHTML shouldBe """<div></div>"""
+    outerTriggers.size shouldBe 3
+    innerTriggers.size shouldBe 1
 
     innerHandler.unsafeOnNext(IO.pure(Attribute("attr", "3")))
     element.innerHTML shouldBe """<div attr="3"></div>"""
+    outerTriggers.size shouldBe 3
+    innerTriggers.size shouldBe 2
 
+    val innerTriggers2 = new scala.collection.mutable.ArrayBuffer[VDomModifier]
     val innerHandler2 = Handler.create[VDomModifier]().unsafeRunSync()
-    innerHandler.unsafeOnNext(IO.pure(ModifierStreamReceiver(innerHandler2, StringVNode("initial2"))))
-    element.innerHTML shouldBe """<div>initial2</div>"""
+    val innerTriggers3 = new scala.collection.mutable.ArrayBuffer[VDomModifier]
+    val innerHandler3 = Handler.create[VDomModifier]().unsafeRunSync()
+    innerHandler.unsafeOnNext(IO.pure(ModifierStreamReceiver(innerHandler2.map { x => innerTriggers2 += x; x }, ModifierStreamReceiver(innerHandler3.map { x => innerTriggers3 += x; x }))))
+    element.innerHTML shouldBe """<div></div>"""
+    outerTriggers.size shouldBe 3
+    innerTriggers.size shouldBe 3
+    innerTriggers2.size shouldBe 0
+    innerTriggers3.size shouldBe 0
+
+    innerHandler2.unsafeOnNext(VDomModifier("2"))
+    element.innerHTML shouldBe """<div>2</div>"""
+    outerTriggers.size shouldBe 3
+    innerTriggers.size shouldBe 3
+    innerTriggers2.size shouldBe 1
+    innerTriggers3.size shouldBe 0
 
     innerHandler.unsafeOnNext(IO.pure(EmptyModifier))
     element.innerHTML shouldBe """<div></div>"""
+    outerTriggers.size shouldBe 3
+    innerTriggers.size shouldBe 4
+    innerTriggers2.size shouldBe 1
+    innerTriggers3.size shouldBe 0
 
     innerHandler2.unsafeOnNext(VDomModifier("me?"))
     element.innerHTML shouldBe """<div></div>"""
+    outerTriggers.size shouldBe 3
+    innerTriggers.size shouldBe 4
+    innerTriggers2.size shouldBe 1
+    innerTriggers3.size shouldBe 0
+
+    innerHandler3.unsafeOnNext(VDomModifier("me?"))
+    element.innerHTML shouldBe """<div></div>"""
+    outerTriggers.size shouldBe 3
+    innerTriggers.size shouldBe 4
+    innerTriggers2.size shouldBe 1
+    innerTriggers3.size shouldBe 0
 
     myHandler.unsafeOnNext(VDomModifier("go away"))
     element.innerHTML shouldBe """<div>go away</div>"""
+    outerTriggers.size shouldBe 4
+    innerTriggers.size shouldBe 4
+    innerTriggers2.size shouldBe 1
+    innerTriggers3.size shouldBe 0
 
     innerHandler.unsafeOnNext(VDomModifier("me?"))
     element.innerHTML shouldBe """<div>go away</div>"""
+    outerTriggers.size shouldBe 4
+    innerTriggers.size shouldBe 4
+    innerTriggers2.size shouldBe 1
+    innerTriggers3.size shouldBe 0
   }
 
   it should "work for nested observables with seq modifiers " in {
@@ -1283,6 +1339,15 @@ class OutWatchDomSpec extends JSDomSpec {
     initEvent(event)("click", canBubbleArg = true, cancelableArg = false)
     document.getElementById("click").dispatchEvent(event)
     clickCounter shouldBe 1
+
+    document.getElementById("click").dispatchEvent(event)
+    clickCounter shouldBe 2
+
+    myHandler.unsafeOnNext(VDomModifier.empty)
+    element.innerHTML shouldBe """<div id="click"></div>"""
+
+    document.getElementById("click").dispatchEvent(event)
+    clickCounter shouldBe 2
   }
 
   it should "work for streaming accum attributes" in {

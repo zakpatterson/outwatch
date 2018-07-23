@@ -120,15 +120,18 @@ private[outwatch] class StreamableModifiers(modifiers: Seq[Modifier]) {
     case ModifierStreamReceiver(modStream, initialValue) =>
       val observable = modStream.switchMap[Modifier] { mod =>
         handleStreamedModifier(mod.unsafeRunSync) match {
-          //TODO: why is startWith different and leaks a subscription? stream.startWith(EmptyModifier :: Nil)
-          case ContentKind.Dynamic(stream, defaultValue) => Observable.concat(Observable.now(defaultValue), stream)
+          //TODO: why is startWith different and leaks a subscription? see tests with: stream.startWith(initialValue :: Nil)
+          case ContentKind.Dynamic(stream, initialValue) => Observable.concat(Observable.now(initialValue), stream)
           case ContentKind.Static(mod) => Observable.now(mod)
         }
       }
 
       handleStreamedModifier(initialValue) match {
         case ContentKind.Dynamic(initialObservable, mod) =>
-          ContentKind.Dynamic(Observable.merge(initialObservable.takeUntil(observable), observable), mod)
+          val combinedObservable = observable.publishSelector { observable =>
+            Observable.merge(initialObservable.takeUntil(observable), observable)
+          }
+          ContentKind.Dynamic(combinedObservable, mod)
         case ContentKind.Static(mod) =>
           ContentKind.Dynamic(observable, mod)
       }
