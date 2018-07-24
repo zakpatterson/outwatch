@@ -64,6 +64,7 @@ scalacOptions ++= {
 }
 
 requiresDOM in Test := true
+version in installJsdom := "11.11.0"
 useYarn := true
 
 publishMavenStyle := true

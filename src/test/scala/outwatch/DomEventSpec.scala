@@ -620,10 +620,6 @@ class DomEventSpec extends JSDomSpec {
   }
 
   "Emitterbuilder" should "stopImmediatePropagation" in {
-    // stopImmediatePropagation is supported in jsdom since version 9.12
-    // https://github.com/jsdom/jsdom/blob/master/Changelog.md#9120
-    pending
-
     var triggeredFirst = false
     var triggeredSecond = false
     val node = div(
