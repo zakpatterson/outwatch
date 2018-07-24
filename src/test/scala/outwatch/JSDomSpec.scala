@@ -21,33 +21,9 @@ trait EasySubscribe {
   }
 }
 
-// TODO: We need this mock until localStorage is implemented in jsdom (https://github.com/tmpvar/jsdom/pull/2076)
 trait LocalStorageMock {
   import scala.collection.mutable
   import scala.scalajs.js
-
-
-  if (js.isUndefined(window.localStorage)) {
-    js.Dynamic.global.window.updateDynamic("localStorage")(new js.Object {
-      private val map = new mutable.HashMap[String, String]
-
-      @SuppressWarnings(Array("unused"))
-      def getItem(key: String): String = map.getOrElse(key, null)
-
-      @SuppressWarnings(Array("unused"))
-      def setItem(key: String, value: String): Unit = {
-        map += key -> value
-      }
-
-      @SuppressWarnings(Array("unused"))
-      def removeItem(key: String): Unit = {
-        map -= key
-      }
-
-      @SuppressWarnings(Array("unused"))
-      def clear(): Unit = map.clear()
-    })
-  }
 
   def dispatchStorageEvent(key: String, newValue: String, oldValue: String): Unit = {
     if (key == null) window.localStorage.clear()
@@ -71,8 +47,6 @@ abstract class JSDomSpec extends FlatSpec with Matchers with BeforeAndAfterEach 
   override def beforeEach(): Unit = {
 
     document.body.innerHTML = ""
-
-    window.localStorage.clear()
 
     // prepare body with <div id="app"></div>
     val root = document.createElement("div")

@@ -598,7 +598,7 @@ class DomEventSpec extends JSDomSpec {
     document.getElementById("click").dispatchEvent(event)
   }
 
-  "Emitterbuilder" should "stopPropagation" in {
+  it should "stopPropagation" in {
     var triggeredFirst = false
     var triggeredSecond = false
     val node = div(
@@ -619,13 +619,13 @@ class DomEventSpec extends JSDomSpec {
     triggeredSecond shouldBe false
   }
 
-  "Emitterbuilder" should "stopImmediatePropagation" in {
+  it should "stopImmediatePropagation" in {
     var triggeredFirst = false
     var triggeredSecond = false
     val node = div(
       id := "click",
       onClick.stopImmediatePropagation --> sideEffect{triggeredFirst = true},
-      onClick --> sideEffect{triggeredSecond = true}
+      onClick --> sideEffect{triggeredSecond = true},
     )
 
     OutWatch.renderInto("#app", node).unsafeRunSync()
