@@ -989,13 +989,7 @@ class OutWatchDomSpec extends JSDomSpec {
     myHandler.onNext(IO.pure(CompositeModifier(ModifierStreamReceiver(innerHandler2) :: Nil)))
     element.innerHTML shouldBe """<div></div>"""
 
-<<<<<<< HEAD
-    myHandler.onNext(IO.pure(CompositeModifier(StringModifier("pete") :: ModifierStreamReceiver(innerHandler2) :: Nil)))
-||||||| merged common ancestors
-    myHandler.unsafeOnNext(IO.pure(CompositeModifier(StringModifier("pete") :: ModifierStreamReceiver(innerHandler2) :: Nil)))
-=======
     myHandler.unsafeOnNext(IO.pure(CompositeModifier(StringVNode("pete") :: ModifierStreamReceiver(innerHandler2) :: Nil)))
->>>>>>> remove stringmodifier, check for only stringvnode children on render instead
     element.innerHTML shouldBe """<div>pete</div>"""
 
     innerHandler2.onNext(VDomModifier(id := "dieter", "r"))
