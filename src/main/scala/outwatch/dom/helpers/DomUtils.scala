@@ -3,8 +3,6 @@ package outwatch.dom.helpers
 import monix.reactive.Observable
 import outwatch.dom._
 
-import scala.collection.breakOut
-
 object SeparatedModifiers {
   private[outwatch] def from(modifiers: Seq[Modifier]): SeparatedModifiers = {
     modifiers.foldRight(SeparatedModifiers())((m, sm) => m :: sm)
