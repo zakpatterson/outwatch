@@ -61,6 +61,37 @@ class SnabbdomSpec extends JSDomSpec {
     inputElement().value shouldBe ""
   }
 
+  it should "handle keys with nested observables" in {
+    import outwatch.dom._
+    import outwatch.dom.dsl._
+
+    val a = Handler.create[Int](0).unsafeRunSync()
+    val b = Handler.create[Int](0).unsafeRunSync()
+
+    val vtree = div(
+      a.map { a =>
+        div(
+          id := "content",
+          dsl.key := "bla",
+          a,
+          b.map { b => div(b) }
+        )
+      }
+    )
+
+    OutWatch.renderInto("#app", vtree).unsafeRunSync()
+
+    def content = document.getElementById("content").innerHTML
+
+    content shouldBe "0<div>0</div>"
+
+    a.onNext(1)
+    content shouldBe "1<div>0</div>"
+
+    b.onNext(1)
+    content shouldBe "1<div>1</div>"
+  }
+
   it should "correctly handle boolean attributes" in {
     val message = "Hello World"
     val attributes = js.Dictionary[dom.Attr.Value]("bool1" -> true, "bool0" -> false, "string1" -> "true", "string0" -> "false")
