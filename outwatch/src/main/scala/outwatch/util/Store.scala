@@ -42,6 +42,7 @@ trait StoreOps[F[_]] extends ProHandlerOps[F] {
 
           action -> newState
         }
+
       }
 
       val out = subject.transformObservable(source =>
