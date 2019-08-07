@@ -1,6 +1,6 @@
 package outwatch.dom
 
-import monix.reactive.Observable
+import monix.reactive.{Observable, ObservableLike}
 import monix.reactive.subjects.Var
 
 trait AsValueObservable[-F[_]] {
@@ -8,9 +8,9 @@ trait AsValueObservable[-F[_]] {
 }
 
 trait AsValueObservableInstances0 {
-  implicit object observable extends AsValueObservable[Observable] {
-    def as[T](stream: Observable[T]): ValueObservable[T] = new ValueObservable[T] {
-      def observable: Observable[T] = stream
+  implicit def observable[F[_]](implicit F: ObservableLike[F]) = new AsValueObservable[F] {
+    def as[T](stream: F[T]): ValueObservable[T] = new ValueObservable[T] {
+      def observable: Observable[T] = F(stream)
       def value: Option[T] = None
     }
   }
