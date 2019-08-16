@@ -13,7 +13,7 @@ import outwatch.dom.helpers.STRef
 
 trait StoreOps[F[_]] {
 
-  object Store extends ProHandlerOps[F] {
+  object Store {
     def create[A, M](
       initialAction: A,
       initialState: M,
@@ -49,7 +49,7 @@ trait StoreOps[F[_]] {
   }
 }
 
-class GlobalStore[F[_]: Sync, A, M] extends ProHandlerOps[F] with StoreOps[F] with OutWatchOps[F] {
+class GlobalStore[F[_]: Sync, A, M] extends StoreOps[F] with OutWatchOps[F] {
 
   /**
    * A global reference to a Store.

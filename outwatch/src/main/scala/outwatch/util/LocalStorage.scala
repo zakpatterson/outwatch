@@ -1,6 +1,5 @@
 package outwatch.util
 
-import cats.effect.Sync
 import cats.implicits._
 import monix.eval.Task
 import monix.execution.Scheduler
@@ -12,26 +11,23 @@ import outwatch._
 import outwatch.dom._
 import outwatch.dom.dsl.events
 
-class Storage[F[_]: Sync](domStorage: dom.Storage) extends ProHandlerOps[F] {
-  private def subjectWithTransform(key: String, transform: Observable[Option[String]] => Observable[Option[String]])(implicit scheduler: Scheduler): F[Handler[Option[String]]] = {
+class Storage(domStorage: dom.Storage) {
+  private def subjectWithTransform(key: String, transform: Observable[Option[String]] => Observable[Option[String]])(implicit scheduler: Scheduler): Handler[Option[String]] = {
     val storage = new dom.ext.Storage(domStorage)
 
-    for {
-      h <- Handler.create[Option[String]](storage(key))
-    } yield {
-      // We execute the write-action to the storage
-      // and pass the written value through to the underlying subject h
-      val connectable = h.transformHandler[Option[String]](o => transform(o).distinctUntilChanged) { input =>
-        input.doOnNext {
-          case Some(data) => Task(storage.update(key, data))
-          case None => Task(storage.remove(key))
-        }
+    val h = Handler.create(storage(key))
+    // We execute the write-action to the storage
+    // and pass the written value through to the underlying subject h
+    val connectable = h.transformHandler[Option[String]](o => transform(o).distinctUntilChanged) { input =>
+      input.doOnNext {
+        case Some(data) => Task(storage.update(key, data))
+        case None => Task(storage.remove(key))
       }
-
-      connectable.connect()
-
-      connectable
     }
+
+    connectable.connect()
+
+    connectable
   }
 
   private def storageEventsForKey(key: String)(implicit scheduler: Scheduler): Observable[Option[String]] =
@@ -46,20 +42,20 @@ class Storage[F[_]: Sync](domStorage: dom.Storage) extends ProHandlerOps[F] {
         None
     }
 
-  def handlerWithoutEvents(key: String)(implicit scheduler: Scheduler): F[Handler[Option[String]]] = {
+  def handlerWithoutEvents(key: String)(implicit scheduler: Scheduler): Handler[Option[String]] = {
     subjectWithTransform(key, identity)
   }
 
-  def handlerWithEventsOnly(key: String)(implicit scheduler: Scheduler): F[Handler[Option[String]]] = {
+  def handlerWithEventsOnly(key: String)(implicit scheduler: Scheduler): Handler[Option[String]] = {
     val storageEvents = storageEventsForKey(key)
     subjectWithTransform(key, o => storageEvents)
   }
 
-  def handler(key: String)(implicit scheduler: Scheduler): F[Handler[Option[String]]] = {
+  def handler(key: String)(implicit scheduler: Scheduler): Handler[Option[String]] = {
     val storageEvents = storageEventsForKey(key)
     subjectWithTransform(key, Observable(_, storageEvents).merge)
   }
 }
 
-class LocalStorage[F[_]: Sync] extends Storage[F](localStorage)
-class SessionStorage[F[_]: Sync] extends Storage[F](sessionStorage)
+object LocalStorage extends Storage(localStorage)
+object SessionStorage extends Storage(sessionStorage)

@@ -43,77 +43,76 @@ class SnabbdomSpec extends JSDomAsyncSpec {
 
     def inputElement() = document.getElementById("input").asInstanceOf[html.Input]
 
-    Handler.create[Int](1).flatMap { clicks =>
+    val clicks = Handler.create[Int](1)
 
-      val nodes = clicks.map { i =>
-        div(
-          attributes.key := s"key-$i",
-          span(onClick(if (i == 1) 2 else 1) --> clicks, s"This is number $i", id := "btn"),
-          input(id := "input")
-        )
-      }
-
-      for {
-
-               _ <- IO {
-                   val node = document.createElement("div")
-                   node.id = "app"
-                   document.body.appendChild(node)
-                   node
-                 }
-
-               _ <- OutWatch.renderInto("#app", div(nodes))
-
-        inputEvt <- IO {
-                    val inputEvt = document.createEvent("HTMLEvents")
-                    initEvent(inputEvt)("input", canBubbleArg = false, cancelableArg = true)
-                    inputEvt
-                  }
-
-        clickEvt <- IO {
-                    val clickEvt = document.createEvent("Events")
-                    initEvent(clickEvt)("click", canBubbleArg = true, cancelableArg = true)
-                    clickEvt
-                  }
-
-             btn <- IO(document.getElementById("btn"))
-
-              ie <- IO {
-                    inputElement().value = "Something"
-                    inputElement().dispatchEvent(inputEvt)
-                    btn.dispatchEvent(clickEvt)
-                    inputElement().value
-                  }
-               _ = ie shouldBe ""
-
-      } yield succeed
-
+    val nodes = clicks.map { i =>
+      div(
+        attributes.key := s"key-$i",
+        span(onClick(if (i == 1) 2 else 1) --> clicks, s"This is number $i", id := "btn"),
+        input(id := "input")
+      )
     }
+
+    for {
+              _ <- IO {
+                  val node = document.createElement("div")
+                  node.id = "app"
+                  document.body.appendChild(node)
+                  node
+                }
+
+              _ <- OutWatch.renderInto("#app", div(nodes))
+
+      inputEvt <- IO {
+                  val inputEvt = document.createEvent("HTMLEvents")
+                  initEvent(inputEvt)("input", canBubbleArg = false, cancelableArg = true)
+                  inputEvt
+                }
+
+      clickEvt <- IO {
+                  val clickEvt = document.createEvent("Events")
+                  initEvent(clickEvt)("click", canBubbleArg = true, cancelableArg = true)
+                  clickEvt
+                }
+
+            btn <- IO(document.getElementById("btn"))
+
+            ie <- IO {
+                  inputElement().value = "Something"
+                  inputElement().dispatchEvent(inputEvt)
+                  btn.dispatchEvent(clickEvt)
+                  inputElement().value
+                }
+              _ = ie shouldBe ""
+
+    } yield succeed
   }
 
   it should "handle keys with nested observables" in {
     def getContent =
       IO(document.getElementById("content").innerHTML)
 
+    val a = Handler.create[Int](0)
+    val b = Handler.create[Int](100)
+
+    val vtree = div(
+      a.map { a =>
+        div(
+          id := "content",
+          dsl.key := "bla",
+          a,
+          b.map { b => div(id := "meh", b) }
+        )
+      }
+    )
+
     for {
-      a <- Handler.create[Int](0)
-      b <- Handler.create[Int](100)
-      vtree = div(
-              a.map { a =>
-                div(
-                  id := "content",
-                  dsl.key := "bla",
-                  a,
-                  b.map { b => div(id := "meh", b) }
-                )
-              }
-            )
-          _ <- OutWatch.renderInto("#app", vtree)
-          c1 <- getContent
-           _ <- IO.fromFuture(IO(a.onNext(1)))
-          c2 <- getContent
-           _ <- IO.fromFuture(IO(b.onNext(200)))
-          c3 <- getContent
+      _ <- OutWatch.renderInto("#app", vtree)
+      c1 <- getContent
+        _ <- IO.fromFuture(IO(a.onNext(1)))
+      c2 <- getContent
+        _ <- IO.fromFuture(IO(b.onNext(200)))
+      c3 <- getContent
     } yield {
       c1 shouldBe """0<div id="meh">100</div>"""
       c2 shouldBe """1<div id="meh">100</div>"""

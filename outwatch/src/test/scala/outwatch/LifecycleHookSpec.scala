@@ -5,13 +5,13 @@ import monix.execution.Ack.Continue
 import monix.reactive.Observable
 import monix.reactive.subjects.PublishSubject
 import org.scalajs.dom._
-import outwatch.dom.{ProHandlerOps, OutWatchOps, VNode, managed, VDomModifier, ValueObservable}
+import outwatch.dom._
 import outwatch.dom.dsl
 import dsl._
 
 import scala.collection.mutable
 
-class LifecycleHookSpec extends JSDomAsyncSpec with ProHandlerOps[IO] with OutWatchOps[IO] {
+class LifecycleHookSpec extends JSDomAsyncSpec with OutWatchOps[IO] {
 
   "Insertion hooks" should "be called correctly" in {
 

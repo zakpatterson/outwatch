@@ -1,11 +1,10 @@
 package outwatch.dom
 
-import cats.effect.SyncIO
 import monix.execution.Scheduler
 import org.scalajs.dom.{ClipboardEvent, DragEvent, KeyboardEvent, MouseEvent}
 import outwatch.dom.helpers.{ChildStreamReceiverBuilder, ChildrenStreamReceiverBuilder}
 
-trait Handlers extends HandlerOps[SyncIO] {
+trait Handlers {
   @deprecated("Use Handler.create[MouseEvent] instead", "0.11.0")
   def createMouseHandler()(implicit s: Scheduler) = Handler.create[MouseEvent]
   @deprecated("Use Handler.create[KeyboardEvent] instead", "0.11.0")

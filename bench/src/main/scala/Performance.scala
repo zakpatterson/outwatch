@@ -60,9 +60,9 @@ object Performance {
     (0 to 10) foreach { round =>
       val elemId = "msg"
 
-      val handler = Handler.create[Int](0).unsafeRunSync
-      val handler2 = Handler.create[Int](0).unsafeRunSync
-      val handler3 = Handler.create[Int].unsafeRunSync
+      val handler = Handler.create[Int](0)
+      val handler2 = Handler.create[Int](0)
+      val handler3 = Handler.create[Int]
 
       val vtree = div(
         id := elemId,
@@ -119,9 +119,9 @@ object Performance {
     (0 to 10) foreach { round =>
       val elemId = "msg"
 
-      val handler = Handler.create[Int](0).unsafeRunSync
-      val handler2 = Handler.create[Int](0).unsafeRunSync
-      val handler3 = Handler.create[Int].unsafeRunSync
+      val handler = Handler.create[Int](0)
+      val handler2 = Handler.create[Int](0)
+      val handler3 = Handler.create[Int]
 
       val vtree = div(
         id := elemId,
@@ -179,7 +179,7 @@ object Performance {
 
       val elemId = "msg"
 
-      val handler3 = Handler.create[Int].unsafeRunSync
+      val handler3 = Handler.create[Int]
 
       def node1(j: Int) = input(tpe := "text", dsl.defaultValue := j.toString, styleAttr := "background:black;", handler3)
       def node2(j: Int) = div(
@@ -188,8 +188,8 @@ object Performance {
         handler3
       )
 
-      val handler = Handler.create[ChildCommand](ChildCommand.ReplaceAll(js.Array(node1(0)))).unsafeRunSync
-      val handler2 = Handler.create[ChildCommand](ChildCommand.ReplaceAll(js.Array(node2(0)))).unsafeRunSync
+      val handler = Handler.create[ChildCommand](ChildCommand.ReplaceAll(js.Array(node1(0))))
+      val handler2 = Handler.create[ChildCommand](ChildCommand.ReplaceAll(js.Array(node2(0))))
 
       val vtree = div(
         id := elemId,
