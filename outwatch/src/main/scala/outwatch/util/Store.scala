@@ -1,28 +1,19 @@
-package outwatch.util
+package outwatch
+package util
 
 import cats.effect.Sync
 import cats.implicits._
 import monix.execution.Scheduler
+import monix.eval.Task
 import monix.reactive.subjects.PublishSubject
 import org.scalajs.dom
 import outwatch._
+import outwatch.dom._
 import outwatch.dom.helpers.STRef
-import outwatch.dom.{OutWatch, VNode}
-import monix.eval.Task
 
-trait StoreOps[F[_]] extends ProHandlerOps[F] {
+trait StoreOps[F[_]] {
 
   object Store {
-    /**
-     * Creates a Store in the context of the provided F
-     * A Store capules a scan operation on an Observable in an opinionated manner.
-     * An internal state is tansformed by a series of actions.
-     * The state will be the same for every subscriber.
-     * @param initialAction The Stores initial action. Useful for re-creating a store from memory.
-     * @param initialState The stores initial state. Similar to the initial accumulator on a fold / scan.
-     * @param reducer The Reducing funcion. Creates a new State from the previous state and an Action.
-     * @return An Observable emitting a tuple of the current state and the action that caused that state.
-     */
     def create[A, M](
       initialAction: A,
       initialState: M,
@@ -32,7 +23,7 @@ trait StoreOps[F[_]] extends ProHandlerOps[F] {
 
       val fold: ((A, M), A) => (A, M) = {
         case ((_, state), action) => {
-          val (newState, effects) = reducer.reducer(state, action)
+          val (newState, effects) = reducer(state, action)
 
           effects.subscribe(
             next => subject.feed(next :: Nil),
@@ -59,7 +50,7 @@ trait StoreOps[F[_]] extends ProHandlerOps[F] {
   }
 }
 
-class GlobalStore[F[_]: Sync, A, M] extends ProHandlerOps[F] with StoreOps[F] {
+class GlobalStore[F[_]: Sync, A, M] extends StoreOps[F] with OutWatchOps[F] {
 
   /**
    * A global reference to a Store.
@@ -87,10 +78,9 @@ class GlobalStore[F[_]: Sync, A, M] extends ProHandlerOps[F] with StoreOps[F] {
     store <- Store.create[A, M](initialAction, initialState, reducer)
     _ <- storeRef.asInstanceOf[STRef[F, ProHandler[A, M]]].put(store.mapProHandler[A, M](in => in)(out => out._2))
     vnode <- root
-    _ <- OutWatch.renderInto[F](selector, vnode)
+    _ <- OutWatch.renderInto(selector, vnode)
   } yield ()
 
   private object NoStoreException
     extends Exception("Application was rendered without specifying a Store, please use Outwatch.renderWithStore instead")
-
 }

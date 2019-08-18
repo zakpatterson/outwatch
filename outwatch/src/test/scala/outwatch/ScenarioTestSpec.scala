@@ -6,8 +6,10 @@ import monix.reactive.{Observable, Observer}
 import org.scalatest.Assertion
 import outwatch.Deprecated.IgnoreWarnings.initEvent
 import outwatch.dom._
+import outwatch.dom.io._
 import outwatch.dom.dsl._
-import outwatch.io._
+import outwatch.util._
+import outwatch.util.io._
 
 class ScenarioTestSpec extends JSDomAsyncSpec {
 
@@ -16,25 +18,24 @@ class ScenarioTestSpec extends JSDomAsyncSpec {
   def getCounter: Element = document.getElementById("counter")
 
   "A simple counter application" should "work as intended" in {
+    val handlePlus = Handler.create[MouseEvent]
+    val handleMinus = Handler.create[MouseEvent]
+    val plusOne = handlePlus.map(_ => 1)
+    val minusOne = handleMinus.map(_ => -1)
+    val count = Observable(plusOne, minusOne).merge.scan(0)(_ + _).startWith(Seq(0))
+    val node = div(div(
+      button(id := "plus", "+", onClick --> handlePlus),
+      button(id := "minus", "-", onClick --> handleMinus),
+      span(id:="counter", count)
+    ))
 
     val test: IO[Assertion] = for {
-       handlePlus <- Handler.create[MouseEvent]
-      handleMinus <- Handler.create[MouseEvent]
-          plusOne = handlePlus.map(_ => 1)
-         minusOne = handleMinus.map(_ => -1)
-            count = Observable(plusOne, minusOne).merge.scan(0)(_ + _).startWith(Seq(0))
-
-             node = div(div(
-                        button(id := "plus", "+", onClick --> handlePlus),
-                        button(id := "minus", "-", onClick --> handleMinus),
-                        span(id:="counter", count)
-                    ))
                 r <- IO {
                       val root = document.createElement("div")
                       document.body.appendChild(root)
                       root
                     }
-                _ <- OutWatch.renderInto[IO](r, node)
+                _ <- OutWatch.renderInto(r, node)
             event <- IO {
                       val event = document.createEvent("Events")
                       initEvent(event)("click", canBubbleArg = true, cancelableArg = false)
@@ -68,14 +69,14 @@ class ScenarioTestSpec extends JSDomAsyncSpec {
 
     case class CounterModel(count: Int, iterations: Int)
 
-    def reduce(state: CounterModel, action: CounterAction): CounterModel = action match {
-      case Initial => ???
-      case Plus => state.copy(state.count + 1, state.iterations + 1)
-      case Minus => state.copy(state.count - 1, state.iterations + 1)
+    val reduce: Reducer[CounterAction, CounterModel] = Reducer {
+      case (_, Initial) => ???
+      case (state, Plus) => state.copy(state.count + 1, state.iterations + 1)
+      case (state, Minus) => state.copy(state.count - 1, state.iterations + 1)
     }
-
+  
     val node: IO[VNode] = for {
-      store <- Store.create[CounterAction, CounterModel](Initial, CounterModel(0, 0), reduce _)
+      store <- Store.create[CounterAction, CounterModel](Initial, CounterModel(0, 0), reduce)
       state = store.collect { case (action@_, state) => state }
     } yield div(
       div(
@@ -99,7 +100,7 @@ class ScenarioTestSpec extends JSDomAsyncSpec {
             root
           }
       node <- node
-      _ <- OutWatch.renderInto[IO](r, node)
+      _ <- OutWatch.renderInto(r, node)
       e <- IO {
             val event = document.createEvent("Events")
             initEvent(event)("click", canBubbleArg = true, cancelableArg = false)
@@ -144,14 +145,14 @@ class ScenarioTestSpec extends JSDomAsyncSpec {
     def assertGreeting(greeting: String, name: String): Assertion =
       assert(greeting == greetStart + name)
 
-    val node = Handler.create[String].map { nameHandler =>
+    val nameHandler = Handler.create[String]
+    val node = 
       div(
         label("Name:"),
         input(id := "input", tpe := "text", onInput.value --> nameHandler),
         hr(),
         h1(id := "greeting", greetStart, nameHandler)
       )
-    }
 
     val test: IO[Assertion] = for {
           r <- IO {
@@ -159,8 +160,7 @@ class ScenarioTestSpec extends JSDomAsyncSpec {
                 document.body.appendChild(root)
                 root
               }
-      node  <- node
-          _ <- OutWatch.renderInto[IO](r, node)
+          _ <- OutWatch.renderInto(r, node)
       event <- IO {
                 val evt = document.createEvent("HTMLEvents")
                 initEvent(evt)("input", canBubbleArg = false, cancelableArg = true)
@@ -182,14 +182,13 @@ class ScenarioTestSpec extends JSDomAsyncSpec {
     def getButton(element: Element) =
       element.getElementsByTagName("button").item(0)
 
-    def component(): IO[VNode] = {
-      Handler.create[String].map { handler =>
-        div(
-          button(onClick("clicked") --> handler),
-          div(cls := "label", handler)
-        )
-      }
-    }
+    val handler = Handler.create[String]
+
+    def component: VNode =
+      div(
+        button(onClick("clicked") --> handler),
+        div(cls := "label", handler)
+      )
 
     val comp = component()
     val component1 = div(component(), component())
@@ -202,9 +201,9 @@ class ScenarioTestSpec extends JSDomAsyncSpec {
         clickEvt
       }
       e1 <- createDiv
-       _ <- OutWatch.renderInto[IO](e1, component1)
+       _ <- OutWatch.renderInto(e1, component1)
       e2 <- createDiv
-       _ <- OutWatch.renderInto[IO](e2, component2)
+       _ <- OutWatch.renderInto(e2, component2)
        _ <- IO {
              getButton(e1).dispatchEvent(evt)
              getButton(e2).dispatchEvent(evt)
@@ -224,29 +223,29 @@ class ScenarioTestSpec extends JSDomAsyncSpec {
         button(id:= title, onClick(title) --> deleteStream, "Delete")
       )
 
-    def TextFieldComponent(labelText: String, outputStream: Observer[String]) = for {
+    def TextFieldComponent(labelText: String, outputStream: Observer[String]): VNode = { 
+      val textFieldStream = Handler.create[String]
+      val clickStream = Handler.create[MouseEvent]
+      val keyStream = Handler.create[KeyboardEvent]
 
-      textFieldStream <- Handler.create[String]
-      clickStream <- Handler.create[MouseEvent]
-      keyStream <- Handler.create[KeyboardEvent]
+      val buttonDisabled = textFieldStream
+      .map(_.length < 2)
+      .startWith(Seq(true))
 
-      buttonDisabled = textFieldStream
-        .map(_.length < 2)
-        .startWith(Seq(true))
-
-      enterPressed = keyStream
+      val enterPressed = keyStream
         .filter(_.key == "Enter")
 
-      confirm = Observable(enterPressed, clickStream).merge
+      val confirm = Observable(enterPressed, clickStream)
+        .merge
         .withLatestFrom(textFieldStream)((_, input) => input)
 
-    } yield div(
+      div(
         emitter(confirm) --> outputStream,
         label(labelText),
         input(id:= "input", tpe := "text", onInput.value --> textFieldStream, onKeyUp --> keyStream),
         button(id := "submit", onClick --> clickStream, disabled <-- buttonDisabled, "Submit")
       )
-
+    }
 
 
     def addToList(todo: String) = {
@@ -256,37 +255,34 @@ class ScenarioTestSpec extends JSDomAsyncSpec {
     def removeFromList(todo: String) = {
       list: Vector[String] => list.filterNot(_ == todo)
     }
+    
+    val inputHandler = Handler.create[String]
+    val deleteHandler = Handler.create[String]
 
-    val vtree = for {
-      inputHandler <- Handler.create[String]
-      deleteHandler <- Handler.create[String]
+    val adds = inputHandler.map(addToList)
 
-      adds = inputHandler
-        .map(addToList)
+    val deletes = deleteHandler.map(removeFromList)
+    
+    val state = Observable(adds, deletes)
+      .merge
+      .scan(Vector[String]())((state, modify) => modify(state))
+      .map(_.map(n => TodoComponent(n, deleteHandler)))
+      
+    val textFieldComponent = TextFieldComponent("Todo: ", inputHandler)
 
-      deletes = deleteHandler
-        .map(removeFromList)
-
-      state = Observable(adds, deletes).merge
-        .scan(Vector[String]())((state, modify) => modify(state))
-        .map(_.map(n => TodoComponent(n, deleteHandler)))
-      textFieldComponent = TextFieldComponent("Todo: ", inputHandler)
-
-    } yield div(
+    val vtree = div(
         textFieldComponent,
         ul(id:= "list", state)
       )
 
     val test: IO[Assertion] = for {
-
       root <- IO {
         val root = document.createElement("div")
         document.body.appendChild(root)
         root
       }
 
-      vtree <- vtree
-      _ <- OutWatch.renderInto[IO](root, vtree)
+      _ <- OutWatch.renderInto(root, vtree)
 
       inputEvt <- IO {
         val inputEvt = document.createEvent("HTMLEvents")

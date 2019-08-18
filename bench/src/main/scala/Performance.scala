@@ -1,7 +1,7 @@
 package outwatch
 
-import cats.effect.IO
 import outwatch.dom._
+import outwatch.dom.io._
 import outwatch.dom.dsl._
 import monix.execution.ExecutionModel.SynchronousExecution
 import monix.execution.schedulers.TrampolineScheduler
@@ -17,7 +17,7 @@ object jsdom extends js.Object {
   def jsdom(innerHTML: js.UndefOr[String]): js.Any = js.native
 }
 
-object Performance extends HandlerOps[IO] {
+object Performance {
 
   implicit val scheduler: Scheduler = TrampolineScheduler(Scheduler.global, SynchronousExecution)
 
@@ -60,9 +60,9 @@ object Performance extends HandlerOps[IO] {
     (0 to 10) foreach { round =>
       val elemId = "msg"
 
-      val handler = Handler.create[Int](0).unsafeRunSync
-      val handler2 = Handler.create[Int](0).unsafeRunSync
-      val handler3 = Handler.create[Int].unsafeRunSync
+      val handler = Handler.create[Int](0)
+      val handler2 = Handler.create[Int](0)
+      val handler3 = Handler.create[Int]
 
       val vtree = div(
         id := elemId,
@@ -94,7 +94,7 @@ object Performance extends HandlerOps[IO] {
 
       val t = System.nanoTime()
 
-      OutWatch.renderInto[IO](node, vtree).unsafeRunSync()
+      OutWatch.renderInto(node, vtree).unsafeRunSync()
 
       (0 to numIterations).foreach { i =>
         handler.onNext(i)
@@ -119,9 +119,9 @@ object Performance extends HandlerOps[IO] {
     (0 to 10) foreach { round =>
       val elemId = "msg"
 
-      val handler = Handler.create[Int](0).unsafeRunSync
-      val handler2 = Handler.create[Int](0).unsafeRunSync
-      val handler3 = Handler.create[Int].unsafeRunSync
+      val handler = Handler.create[Int](0)
+      val handler2 = Handler.create[Int](0)
+      val handler3 = Handler.create[Int]
 
       val vtree = div(
         id := elemId,
@@ -153,7 +153,7 @@ object Performance extends HandlerOps[IO] {
 
       val t = System.nanoTime()
 
-      OutWatch.renderInto[IO](node, vtree).unsafeRunSync()
+      OutWatch.renderInto(node, vtree).unsafeRunSync()
 
       (0 to numIterations).foreach { i =>
         handler.onNext(i)
@@ -179,7 +179,7 @@ object Performance extends HandlerOps[IO] {
 
       val elemId = "msg"
 
-      val handler3 = Handler.create[Int].unsafeRunSync
+      val handler3 = Handler.create[Int]
 
       def node1(j: Int) = input(tpe := "text", dsl.defaultValue := j.toString, styleAttr := "background:black;", handler3)
       def node2(j: Int) = div(
@@ -188,8 +188,8 @@ object Performance extends HandlerOps[IO] {
         handler3
       )
 
-      val handler = Handler.create[ChildCommand](ChildCommand.ReplaceAll(js.Array(node1(0)))).unsafeRunSync
-      val handler2 = Handler.create[ChildCommand](ChildCommand.ReplaceAll(js.Array(node2(0)))).unsafeRunSync
+      val handler = Handler.create[ChildCommand](ChildCommand.ReplaceAll(js.Array(node1(0))))
+      val handler2 = Handler.create[ChildCommand](ChildCommand.ReplaceAll(js.Array(node2(0))))
 
       val vtree = div(
         id := elemId,
@@ -208,7 +208,7 @@ object Performance extends HandlerOps[IO] {
 
       val t = System.nanoTime()
 
-      OutWatch.renderInto[IO](node, vtree).unsafeRunSync()
+      OutWatch.renderInto(node, vtree).unsafeRunSync()
 
       var node1Counter = 0
       var node2Counter = 0
