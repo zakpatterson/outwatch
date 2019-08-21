@@ -43,6 +43,8 @@ lazy val outwatch = project
   .settings(
     name := "OutWatch",
     normalizedName := "outwatch",
+    scalaJSUseMainModuleInitializer := true,
+    webpackBundlingMode := BundlingMode.LibraryOnly(),
 
     libraryDependencies ++= Seq(
       "io.monix"      %%% "monix"       % "3.0.0-RC3",
@@ -102,6 +104,20 @@ lazy val bench = project
     ),
   )
 
+lazy val docs = project
+  .in(file("outwatch-docs")) // important: it must not be docs/
+  .dependsOn(outwatch)
+  .settings(
+    mdocJS := Some(outwatch),
+    mdocJSLibraries := webpack.in(outwatch, Compile, fullOptJS).value,
+    mdocVariables := Map(
+      /* TODO: "SCALAJSVERSION" -> scalaJSVersions.current, */
+      "VERSION" -> version.value,
+      "HEADCOMMIT" -> git.gitHeadCommit.value.get.take(8)
+    ),
+    moduleName := "outwatch-docs",
+  )
+  .enablePlugins(MdocPlugin, DocusaurusPlugin)
 
 lazy val root = project
   .in(file("."))
