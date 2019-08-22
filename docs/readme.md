@@ -1,11 +1,12 @@
 # OutWatch - Functional and reactive Web-Frontend Library with Reactive Programming, VirtualDom and Scala [![Typelevel incubator](https://img.shields.io/badge/typelevel-incubator-F51C2B.svg)](http://typelevel.org) [![Build Status](https://travis-ci.org/OutWatch/outwatch.svg?branch=master)](https://travis-ci.org/OutWatch/outwatch) [![Scala.js](http://scala-js.org/assets/badges/scalajs-0.6.15.svg)](http://scala-js.org) [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/OutWatch/Lobby)
 
-```scala mdoc:js
+```scala mdoc:js:shared
+import cats.effect.IO
 import outwatch.dom._
 import outwatch.dom.dsl._
 import monix.execution.Scheduler.Implicits.global
 
-OutWatch.renderInto("#app", h1("Hello World")).unsafeRunSync()
+ OutWatch.renderInto("#app", h1("Hello World"))
 ```
 
 Syntax is almost exactly as in [ScalaTags](http://www.lihaoyi.com/scalatags/). The UI is made reactive with [Monix](https://monix.io/).
@@ -14,41 +15,15 @@ You can find more examples and features at the end of this readme.
 
 
 ## Getting started
-### Start with a template
-For a quick start, install `java`, `sbt`, `nodejs` and `yarn` and use the following g8 template:
-```bash
-sbt new outwatch/seed.g8
-```
-
-In your newly created project folder, run:
-```bash
-sbt dev
-```
-
-and point your browser to http://localhost:8080.
-
-Changes to the code will trigger a recompile and automatically refresh the page in the browser.
-
-
 ### Use in an already existing project
 Install `java`, `sbt` and  `nodejs`, if you haven't already.
 Create a new SBT project and add the ScalaJS and Scala-js-bundler plugin to your `plugins.sbt`:
 ```scala
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.26")
-addSbtPlugin("ch.epfl.scala" % "sbt-scalajs-bundler" % "0.14.0")
-```
-Then add the outwatch dependency to your `build.sbt`.
-
-```scala
-libraryDependencies += "io.github.outwatch" %%% "outwatch" % "@VERSION@"
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.28")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalajs-bundler" % "0.15.0-0.6")
 ```
 
-And enable the `scalajs-bundler` plugin:
-```scala
-enablePlugins(ScalaJSBundlerPlugin)
-```
-
-If you are curious and want to try the state of the current `master` branch, add the following instead:
+At the moment it is best to use this library from the master branch directly. As soon as possible we will migrate to versioned releases. Add the following:
 
 ```scala
 resolvers += "jitpack" at "https://jitpack.io"
@@ -59,6 +34,11 @@ When using [JitPack](https://jitpack.io), it is often more useful to point to a 
 
 ```scala
 libraryDependencies += "com.github.outwatch" % "outwatch" % "@HEADCOMMIT@"
+```
+
+And enable the `scalajs-bundler` plugin:
+```scala
+enablePlugins(ScalaJSBundlerPlugin)
 ```
 
 Like that you can try the latest features from specific commits on `master`, other branches or PRs.
@@ -80,7 +60,7 @@ Outwatch is a web frontend UI framework written in ScalaJS.
 
 If you find any error in the examples, please open an issue on GitHub.
 
-There is a changelog which contains examples of the latest changes: [CHANGELOG.md](CHANGELOG.md)
+There is a changelog which contains examples of the latest changes: [CHANGELOG.md](https://github.com/OutWatch/outwatch/blob/master/CHANGELOG.md)
 
 There is also the outdated but conceptually still correct [documentation](https://outwatch.github.io/) -  [contributions welcome](https://github.com/OutWatch/outwatch.github.io).
 
@@ -98,17 +78,14 @@ In your html file, create an element, which you want to replace by dynamic conte
 
 To render html content with outwatch, create a component and render it into the given element:
 
-```scala mdoc:js
-import outwatch.dom._
-import outwatch.dom.dsl._
-import monix.execution.Scheduler.Implicits.global
+```scala mdoc:js:shared
 
 object Main {
   def main(args: Array[String]): Unit = {
     
     val myComponent = div("Hello World")
 
-    OutWatch.renderReplace("#app", myComponent).unsafeRunSync()
+    OutWatch.renderReplace("#app", myComponent)
   }
 }
 ```
@@ -135,21 +112,21 @@ import outwatch.dom._
 import outwatch.dom.dsl._
 ```
 
-```scala mdoc:js
+```scala mdoc:js:shared
 div("Hello ", "World")
 // <div>Hello World</div>
 ```
 
 
 #### Nesting
-```scala mdoc:js
+```scala mdoc:js:shared
 div(span("Hey ", b("you"), "!"))
 // <div>Hey <b>you</b>!</div>
 ```
 
 
 #### Primitives
-```scala mdoc:js
+```scala mdoc:js:shared
 div(true, 0, 1000L, 3.0)
 // <div>true010003.0</div>
 ```
@@ -158,14 +135,14 @@ div(true, 0, 1000L, 3.0)
 #### Attributes
 Attributes are put inside the tag.
 
-```scala mdoc:js
+```scala mdoc:js:shared
 div(id := "test")
 // <div id="test"></div>
 ```
 
 The order of content and attributes does not matter.
 
-```scala mdoc:js
+```scala mdoc:js:shared
 div("How ", id := "test", "are", title := "cool", " you?")
 // <div id="test" title="cool">How are you?</div>
 ```
@@ -174,28 +151,28 @@ div("How ", id := "test", "are", title := "cool", " you?")
 #### Styles
 Styles are also written into the tag. All style properties have to be written in *camelCase*.
 
-```scala mdoc:js
-div(color := "tomato", "Hello")
-// <div style="color: blue">Hello</div>
+```scala mdoc:js:shared
+div(style("color") := "tomato", "Hello")
+// <div style="color: tomato">Hello</div>
 ```
 
 Multiple styles will me merged to one style attribute:
 
-```scala mdoc:js
-div(backgroundColor := "powderblue", border := "2px solid #222", "Hello")
+```scala mdoc:js:shared
+div(style("backgroundColor") := "powderblue", style("border") := "2px solid #222", "Hello")
 // <div style="background-color: powderblue; border: 2px solid #222">Hello</div>
 ```
 
 Again, the order of styles, attributes and inner tags does not matter:
 
-```scala mdoc:js
-div(h1("Welcome to my website"), backgroundColor := "powderblue", id := "header")
+```scala mdoc:js:shared
+div(h1("Welcome to my website"), style("backgroundColor") := "powderblue", id := "header")
 // <div style="background-color: powderblue" id="header">Welcome to my website</div>
 ```
 
 Some styles have type safe values:
 
-```scala mdoc:js
+```scala mdoc:js:shared
 div(cursor.pointer, fontWeight.bold, display.flex)
 // <div style="cursor: pointer; font-weight: bold; display: flex;"></div>
 ```
@@ -206,7 +183,7 @@ If you are missing more type safe values, please contribute to [Scala Dom Types]
 #### Attributes, which are scala keywords
 There are some attributes and styles which are reserved scala keywords. You can use them with backticks:
 
-```scala mdoc:js
+```scala mdoc:js:shared
 div(`class` := "item", "My Item")
 // <div class="item">My Item</div>
 
@@ -216,28 +193,28 @@ label(`for` := "inputid")
 
 There is also a shortcut for the class atrribute:
 
-```scala mdoc:js
+```scala mdoc:js:shared
 div(cls := "myclass")
 // <div class="myclass"></div>
 ```
 
-Source Code: [OutwatchAttributes.scala](src/main/scala/outwatch/dom/OutwatchAttributes.scala#L65)
+Source Code: [OutwatchAttributes.scala](https://github.com/OutWatch/outwatch/blob/master/outwatch/src/main/scala/outwatch/dom/OutwatchAttributes.scala#L65)
 
 
 #### Overriding attributes
 Attributes and styles with the same name will be overwritten. Last wins.
 
-```scala mdoc:js
-div(color := "blue", color := "green")
+```scala mdoc:js:shared
+div(style("color") := "blue", style("color") := "green")
 // <div style="color: green"></div>
 ```
 
-Source Code: [DomUtils.scala](src/main/scala/outwatch/dom/helpers/DomUtils.scala#L8)
+Source Code: [DomUtils.scala](https://github.com/OutWatch/outwatch/blob/master/outwatch/src/main/scala/outwatch/dom/helpers/DomUtils.scala#L8)
 
 #### Class accumulation
 Classes are not overwritten, they accumulate.
 
-```scala mdoc:js
+```scala mdoc:js:shared
 div(cls := "tiny", cls := "button")
 // <div class="tiny button"></div>
 ```
@@ -246,13 +223,13 @@ div(cls := "tiny", cls := "button")
 All the tags, attributes and styles available in outwatch come from [Scala Dom Types](https://github.com/raquo/scala-dom-types).
 If you want to use something not available in Scala Dom Types, you can use custom builders:
 
-```scala mdoc:js
+```scala mdoc:js:shared
 htmlTag("app")(style("user-select") := "none", attr("everything") := "possible")
 // <app style="user-select: none" everything="possible"></div>
 ```
 
 You can also define the accumulation behavior of custom attributes:
-```scala mdoc:js
+```scala mdoc:js:shared
 div(
   attr("everything").accum("-") := "is",
   attr("everything").accum("-") := "possible",
@@ -262,24 +239,24 @@ div(
 
 If you think there is something missing in Scala Dom Types, please open a PR or Issue. Usually it's just one line of code.
 
-Source Code: [DomTypes.scala](src/main/scala/outwatch/dom/DomTypes.scala)
+Source Code: [DomTypes.scala](https://github.com/OutWatch/outwatch/blob/master/outwatch/src/main/scala/outwatch/dom/DomTypes.scala)
 
 
 #### Data attributes
 Data attributes make use of [`scala.Dynamic`](https://www.scala-lang.org/api/current/scala/Dynamic.html), so you can write things like:
 
-```scala mdoc:js
+```scala mdoc:js:shared
 div(data.payload := "17")
 // <div data-payload="17"></div>
 ```
 
-Source Code: [OutwatchAttributes.scala](src/main/scala/outwatch/dom/OutwatchAttributes.scala#L70), [Builder.scala](src/main/scala/outwatch/dom/helpers/Builder.scala#L39)
+Source Code: [OutwatchAttributes.scala](https://github.com/OutWatch/outwatch/blob/mastersrc/main/scala/outwatch/dom/OutwatchAttributes.scala#L70), [Builder.scala](https://github.com/OutWatch/outwatch/blob/master/outwatch/src/main/scala/outwatch/dom/helpers/Builder.scala#L39)
 
 
 #### SVG
 SVG tags and attributes are available via an extra import. Namespacing is automatically handled for you.
 
-```scala mdoc:js
+```scala mdoc:js:shared
 val graphic = {
  import svg._
  svg(
@@ -298,10 +275,10 @@ val graphic = {
 #### Option and Seq
 Outwatch tries hard to render everything you throw at it. Combine `Option` and `Seq` to fit your needs. Note, that outwatch does not accept `Set`, since the order is undefined.
 
-```scala mdoc:js
+```scala mdoc:js:shared
 div(
   Some("thing"),
-  Some(color := "steelblue"),
+  Some(style("color") := "steelblue"),
   fontSize :=? Some("70px"),
   None,
   Seq("Hey", "How are you?"),
@@ -319,16 +296,16 @@ div(
 // </div>
 ```
 
-Source Code: [AsVDomModifier.scala](src/main/scala/outwatch/AsVDomModifier.scala)
+Source Code: [AsVDomModifier.scala](https://github.com/OutWatch/outwatch/blob/master/outwatch/src/main/scala/outwatch/AsVDomModifier.scala)
 
 
 
 #### Types
 The important types we were using in the examples above are `VNode` and `VDomModifier`:
 
-```scala mdoc:js
+```scala mdoc:js:shared
 val vnode: VNode = div()
-val modifiers: List[VDomModifier] = List("Hello", id := "main", color := "tomato", vnode)
+val modifiers: List[VDomModifier] = List("Hello", id := "main", style("color") := "tomato", vnode)
 ```
 
 Every `VNode` contains a sequence of `VDomModifier`. A `VNode` is a `VDomModifier` itself.
@@ -339,19 +316,19 @@ There are implicits for converting primitives, `Option[VDomModifier]`, `Seq[VDom
 #### Grouping Modifiers
 To make a set of modifiers reusable you can group them to become one `VDomModifier`.
 
-```scala mdoc:js
+```scala mdoc:js:shared
 val bigFont = VDomModifier(fontSize := "40px", fontWeight.bold)
 div("Argh!", bigFont)
 // <div style="font-size: 40px; font-weight: bold;">Argh!</div>
 ```
 
-You can also use a `Seq[VDomModifier]` directly instead of using `apply` defined in the [VDomModifier](src/main/scala/outwatch/dom/package.scala) object.
+You can also use a `Seq[VDomModifier]` directly instead of using `apply` defined in the [VDomModifier](https://github.com/OutWatch/outwatch/blob/master/outwatch/src/main/scala/outwatch/dom/package.scala) object.
 
 
 #### Components
 Outwatch does not have the concept of a component itself. You can just pass the `VNode`s and `VDomModifier`s around and build your own abstractions using functions and classes. When we are talking about components in this documentation, we are usually referring to a `VNode` or a function returning a `VNode`.
 
-```scala mdoc:js
+```scala mdoc:js:shared
 def fancyHeadLine(content: String) = h1(borderBottom := "1px dashed tomato", content)
 fancyHeadLine("I like tomatoes.")
 // <h1 style="border-bottom: 1px dashed tomato;">I like tomatoes.</h1>
@@ -361,7 +338,7 @@ fancyHeadLine("I like tomatoes.")
 #### Transforming Components
 Components are immutable, we can only modify them by creating a changed copy. Like you may know from Scalatags, you can call `.apply(...)` on any `VNode`, *append* more modifiers and get a new `VNode` with the applied changes back.
 
-```scala mdoc:js
+```scala mdoc:js:shared
 val a = div("dog")
 a(title := "the dog")
 // <div title="the dog">dog</div>
@@ -369,7 +346,7 @@ a(title := "the dog")
 
 This can be useful for reusing html snippets.
 
-```scala mdoc:js
+```scala mdoc:js:shared
 val box = div(width := "100px", height := "100px")
 
 div(
@@ -385,15 +362,15 @@ div(
 
 Since modifiers are *appended*, they can overwrite existing ones. This is useful to adjust existing components to your needs.
 
-```scala mdoc:js
-val box = div(width := "100px", height := "100px")
-box(backgroundColor := "mediumseagreen", width := "200px")
+```scala mdoc:js:shared
+def tallBox = div(width := "100px", height := "100px")
+tallBox(backgroundColor := "mediumseagreen", width := "200px")
 // <div style="width: 200px; height: 100px; background-color: mediumseagreen;"></div>
 ```
 
 You can also *prepend* modifiers. This can be useful to provide defaults retroactively.
 
-```scala mdoc:js
+```scala mdoc:js:shared
 def withBorderIfNotProvided(vnode: VNode) = vnode.prepend(border := "3px solid coral")
 div(
   withBorderIfNotProvided(div("hello", border := "7px solid moccasin")),
@@ -405,13 +382,13 @@ div(
 // </div>
 ```
 
-Source Code: [VDomModifier.scala](src/main/scala/outwatch/dom/VDomModifier.scala#L146)
+Source Code: [VDomModifier.scala](https://github.com/OutWatch/outwatch/blob/master/outwatch/src/main/scala/outwatch/dom/VDomModifier.scala#L146)
 
 
 #### Use-Case: Flexbox
 When working with [Flexbox](https://css-tricks.com/snippets/css/a-guide-to-flexbox/), you can set styles for the **container** and **children**. With `VNode.apply()` you can have all flexbox-related styles in one place. The child-components don't have to know anything about flexbox, even though they get specific styles assigned.
 
-```scala mdoc:js
+```scala mdoc:js:shared
 val itemA = div("A", backgroundColor := "mediumseagreen")
 val itemB = div("B", backgroundColor := "tomato")
 
@@ -421,7 +398,7 @@ div(
 
   display.flex,
 
-  itemA(flexBasis := "50px"),
+  itemA(flexBasis := "500px"),
   itemB(alignSelf.center),
 )
 // <div style="height: 100px; border: 1px solid black; display: flex;">
@@ -443,14 +420,14 @@ import monix.execution.Scheduler.Implicits.global
 import concurrent.duration._ // needed for the following examples
 ```
 
-```scala mdoc:js
-object Main {
+```scala mdoc:js:shared
+object Main2 {
   def main(args: Array[String]): Unit = {
 
     val counter = Observable.interval(1 second)
     val counterComponent = div("count: ", counter)
 
-    OutWatch.renderReplace("#app", counterComponent).unsafeRunSync()
+    OutWatch.renderReplace("#app", counterComponent)
   }
 }
 ```
@@ -461,7 +438,7 @@ object Main {
 #### Dynamic attributes
 Attributes can also take dynamic values.
 
-```scala mdoc:js
+```scala mdoc:js:shared
 val color = Observable.interval(1 second).map(i => if(i % 2 == 0) "deepskyblue" else "gold")
 div(width := "100px", height := "100px", backgroundColor <-- color)
 ```
@@ -469,12 +446,12 @@ div(width := "100px", height := "100px", backgroundColor <-- color)
 #### Streaming Modifiers and VNodes
 You can stream arbitrary `VDomModifiers`.
 
-```scala mdoc:js
+```scala mdoc:js:shared
 val dynamicSize:Observable[VDomModifier] = Observable.interval(1 second).map(i => fontSize := s"${i}px")
 div("Hello!", dynamicSize)
 ```
 
-```scala mdoc:js
+```scala mdoc:js:shared
 val nodeStream:Observable[VNode] = Observable.interval(1 second).map(i => div(s"Number $i"))
 div("Hello ", nodeStream)
 ```
@@ -489,6 +466,7 @@ We have prepared the two typeclasses `AsValueObservable` and `AsObserver` to wor
 Example: To use outwatch with [scala.rx](https://github.com/lihaoyi/scala.rx):
 
 ```scala mdoc:js:shared
+import cats.effect.IO
 import rx._
 import monix.reactive._
 import monix.execution._
@@ -521,7 +499,7 @@ implicit def obsToCancelable(obs: Obs): Cancelable = {
 }
 ```
 
-```scala mdoc:js:reset
+```scala mdoc:js:shared
 implicit val ctx: Ctx.Owner = Ctx.Owner.safe()
 val showMessage = Var(false)
 val component = div(
@@ -534,12 +512,12 @@ val component = div(
   managed(() => showMessage.foreach(println))
 )
 
-OutWatch.renderReplace(node, div("yooo")).unsafeRunSync()
+OutWatch.renderReplace("#example", div("yooo"))
 ```
 
 ### debugging snabbdom patches
 
-```scala mdoc:js
+```scala 
 import scala.scalajs.js.JSON
 
 helpers.OutwatchTracing.patch.zipWithIndex.foreach { case (proxy, index) =>
@@ -550,7 +528,7 @@ helpers.OutwatchTracing.patch.zipWithIndex.foreach { case (proxy, index) =>
 ### tracing exceptions in your components
 
 Dynamic components with `Observables` can have errors. This is if `onError` is called on the underlying `Observer`. You can trace them in OutWatch with:`
-```scala mdoc:js
+```scala mdoc:js:shared
 helpers.OutwatchTracing.error.foreach { case throwable =>
   org.scalajs.dom.console.log(s"Exception while patching an Outwatch compontent: ${throwable.getMessage}")
 }

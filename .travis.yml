@@ -17,6 +17,19 @@ env:
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION outwatch/test
+  - sbt docs/mdoc
+  - sbt docs/docusaurusCreateSite
+
+deploy:
+  provider: pages
+  skip-cleanup: true
+  # Set in the settings page of your repository, as a secure variable
+  github-token: $GITHUB_TOKEN  
+  keep-history: true
+  local-dir: ./website/build/outwatch
+  target-branch: gh-pages
+  on:
+    branch: master
 
 cache:
   directories:
@@ -29,4 +42,3 @@ before_cache:
   - rm -fv $HOME/.ivy2/.sbt.ivy.lock
   - find $HOME/.ivy2/cache -name "ivydata-*.properties" -print -delete
   - find $HOME/.sbt        -name "*.lock"               -print -delete
-
