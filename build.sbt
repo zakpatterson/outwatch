@@ -105,21 +105,20 @@ lazy val bench = project
   )
 
 lazy val jsdocs = project
+  .enablePlugins(ScalaJSPlugin, ScalaJSBundlerPlugin)
+  .dependsOn(outwatch)
   .settings(
     libraryDependencies ++= Seq(
-      "org.scala-js" %%% "scalajs-dom" % "0.9.6",
       "com.lihaoyi" %%% "scalarx" % "0.4.0"
     )
   )
-  .enablePlugins(ScalaJSPlugin)
-  .dependsOn(outwatch)
 
 lazy val docs = project
   .in(file("outwatch-docs")) // important: it must not be docs/
-  .dependsOn(outwatch)
+  .enablePlugins(MdocPlugin, DocusaurusPlugin)
   .settings(
     mdocJS := Some(jsdocs),
-    mdocJSLibraries := webpack.in(outwatch, Compile, fullOptJS).value,
+    mdocJSLibraries := webpack.in(jsdocs, Compile, fullOptJS).value,
     mdocVariables := Map(
       /* TODO: "SCALAJSVERSION" -> scalaJSVersions.current, */
       "VERSION" -> version.value,
@@ -127,8 +126,6 @@ lazy val docs = project
     ),
     moduleName := "outwatch-docs",
   )
-  .enablePlugins(MdocPlugin, DocusaurusPlugin)
-  .dependsOn(outwatch)
 
 lazy val root = project
   .in(file("."))
