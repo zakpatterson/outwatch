@@ -125,12 +125,12 @@ object thunk {
     thunk.data.foreach(_.hook.foreach(_.prepatch.foreach(_ (oldProxy, thunk))))
   }
 
-  @inline private def prepatch(fn: () => VNodeProxy, shouldRender: Boolean, oldProxy: VNodeProxy, thunk: VNodeProxy): Unit = {
+  private def prepatch(fn: () => VNodeProxy, shouldRender: Boolean, oldProxy: VNodeProxy, thunk: VNodeProxy): Unit = {
     if (shouldRender) VNodeProxy.updateInto(source = fn(), target = thunk)
     else VNodeProxy.updateInto(source = oldProxy, target = thunk)
   }
 
-  @inline private def existsIndexWhere(maxIndex: Int)(predicate: Int => Boolean): Boolean = {
+  private def existsIndexWhere(maxIndex: Int)(predicate: Int => Boolean): Boolean = {
     var i = 0
     while (i < maxIndex) {
       if (predicate(i)) return true
@@ -161,10 +161,10 @@ object thunk {
     proxy
   }
 
-  @inline def apply(namespace: js.UndefOr[String], selector: String, keyValue: DataObject.KeyValue, renderFn: js.Function0[VNodeProxy], renderArgs: js.Array[Any]): VNodeProxy =
+  def apply(namespace: js.UndefOr[String], selector: String, keyValue: DataObject.KeyValue, renderFn: js.Function0[VNodeProxy], renderArgs: js.Array[Any]): VNodeProxy =
     createProxy(namespace, selector, keyValue, renderArgs, initThunk(renderFn), prepatchArray(renderFn))
 
-  @inline def conditional(namespace: js.UndefOr[String], selector: String, keyValue: DataObject.KeyValue, renderFn: js.Function0[VNodeProxy], shouldRender: Boolean): VNodeProxy =
+  def conditional(namespace: js.UndefOr[String], selector: String, keyValue: DataObject.KeyValue, renderFn: js.Function0[VNodeProxy], shouldRender: Boolean): VNodeProxy =
     createProxy(namespace, selector, keyValue, shouldRender, initThunk(renderFn), prepatchBoolean(renderFn))
 }
 

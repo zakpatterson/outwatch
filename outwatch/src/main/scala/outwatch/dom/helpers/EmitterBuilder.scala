@@ -22,19 +22,19 @@ trait EmitterBuilder[+O, +R] { self =>
   def collect[T](f: PartialFunction[O, T]): EmitterBuilder[T, R]
   def mapResult[S](f: R => S): EmitterBuilder[O, S]
 
-  @inline def foreach(action: O => Unit): R = -->(ObserverBuilder.fromFunction(action))
-  @inline def foreach(action: => Unit): R = foreach(_ => action)
-  @inline def apply[T](value: T): EmitterBuilder[T, R] = map(_ => value)
-  @inline def mapTo[T](value: => T): EmitterBuilder[T, R] = map(_ => value)
-  @inline def apply[T](latest: Observable[T]): EmitterBuilder[T, R] = transform(_.withLatestFrom(latest)((_, u) => u))
-  @inline def debounce(timeout: FiniteDuration): EmitterBuilder[O, R] = transform(_.debounce(timeout))
-  @inline def async: EmitterBuilder[O, R] = transform(_.asyncBoundary(OverflowStrategy.Unbounded))
+  def foreach(action: O => Unit): R = -->(ObserverBuilder.fromFunction(action))
+  def foreach(action: => Unit): R = foreach(_ => action)
+  def apply[T](value: T): EmitterBuilder[T, R] = map(_ => value)
+  def mapTo[T](value: => T): EmitterBuilder[T, R] = map(_ => value)
+  def apply[T](latest: Observable[T]): EmitterBuilder[T, R] = transform(_.withLatestFrom(latest)((_, u) => u))
+  def debounce(timeout: FiniteDuration): EmitterBuilder[O, R] = transform(_.debounce(timeout))
+  def async: EmitterBuilder[O, R] = transform(_.asyncBoundary(OverflowStrategy.Unbounded))
   @deprecated("Deprecated, use '.map' instead", "0.11.0")
-  @inline def apply[T](f: O => T): EmitterBuilder[T, R] = map(f)
+  def apply[T](f: O => T): EmitterBuilder[T, R] = map(f)
 }
 
 object EmitterBuilder {
-  @inline def apply[E <: Event](eventType: String): CustomEmitterBuilder[E, VDomModifier] = ofModifier[E](obs => 
+  def apply[E <: Event](eventType: String): CustomEmitterBuilder[E, VDomModifier] = ofModifier[E](obs => 
     Emitter(
       eventType, 
       event => {
@@ -42,7 +42,7 @@ object EmitterBuilder {
         ()
       }))
 
-  @inline def fromObservable[E](observable: Observable[E]): EmitterBuilder[E, VDomModifier] = new ObservableEmitterBuilder[E, VDomModifier](observable, managedAction)
+  def fromObservable[E](observable: Observable[E]): EmitterBuilder[E, VDomModifier] = new ObservableEmitterBuilder[E, VDomModifier](observable, managedAction)
 
   def ofModifier[E](create: Observer[E] => VDomModifier): CustomEmitterBuilder[E, VDomModifier] = new CustomEmitterBuilder[E, VDomModifier]({
     case o: ConnectableObserver[E] => VDomModifier(managedAction(implicit scheduler => o.connect()), create(o.observer))
@@ -122,22 +122,22 @@ object EmitterBuilder {
 
 trait SyncEmitterBuilder[+O, +R] extends EmitterBuilder[O, R] { self =>
   def transformSync[T](f: Option[O] => Option[T]): SyncEmitterBuilder[T, R]
-  @inline def map[T](f: O => T): SyncEmitterBuilder[T, R] = transformSync(_.map(f))
-  @inline def collect[T](f: PartialFunction[O, T]): SyncEmitterBuilder[T, R] = transformSync(_.collect(f))
-  @inline def filter(predicate: O => Boolean): SyncEmitterBuilder[O, R] = transformSync(_.filter(predicate))
+  def map[T](f: O => T): SyncEmitterBuilder[T, R] = transformSync(_.map(f))
+  def collect[T](f: PartialFunction[O, T]): SyncEmitterBuilder[T, R] = transformSync(_.collect(f))
+  def filter(predicate: O => Boolean): SyncEmitterBuilder[O, R] = transformSync(_.filter(predicate))
   def mapResult[S](f: R => S): SyncEmitterBuilder[O, S] = new SyncEmitterBuilder[O, S] {
-    @inline def transform[T](tr: Observable[O] => Observable[T]): EmitterBuilder[T, S] = self.transform(tr).mapResult(f)
-    @inline def transformSync[T](tr: Option[O] => Option[T]): SyncEmitterBuilder[T, S] = self.transformSync(tr).mapResult(f)
-    @inline def -->(observer: Observer[O]): S = f(self --> observer)
+    def transform[T](tr: Observable[O] => Observable[T]): EmitterBuilder[T, S] = self.transform(tr).mapResult(f)
+    def transformSync[T](tr: Option[O] => Option[T]): SyncEmitterBuilder[T, S] = self.transformSync(tr).mapResult(f)
+    def -->(observer: Observer[O]): S = f(self --> observer)
   }
 }
 trait AsyncEmitterBuilder[+O, +R] extends EmitterBuilder[O, R] { self =>
-  @inline def map[T](f: O => T): EmitterBuilder[T, R] = transform(_.map(f))
-  @inline def filter(predicate: O => Boolean): EmitterBuilder[O, R] = transform(_.filter(predicate))
-  @inline def collect[T](f: PartialFunction[O, T]): EmitterBuilder[T, R] = transform(_.collect(f))
+  def map[T](f: O => T): EmitterBuilder[T, R] = transform(_.map(f))
+  def filter(predicate: O => Boolean): EmitterBuilder[O, R] = transform(_.filter(predicate))
+  def collect[T](f: PartialFunction[O, T]): EmitterBuilder[T, R] = transform(_.collect(f))
   def mapResult[S](f: R => S): EmitterBuilder[O, S] = new AsyncEmitterBuilder[O, S] {
-    @inline def transform[T](tr: Observable[O] => Observable[T]): EmitterBuilder[T, S] = self.transform(tr).mapResult(f)
-    @inline def -->(observer: Observer[O]): S = f(self --> observer)
+    def transform[T](tr: Observable[O] => Observable[T]): EmitterBuilder[T, S] = self.transform(tr).mapResult(f)
+    def -->(observer: Observer[O]): S = f(self --> observer)
   }
 }
 

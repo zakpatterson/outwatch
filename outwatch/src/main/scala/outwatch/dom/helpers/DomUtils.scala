@@ -46,13 +46,13 @@ private[outwatch] object SeparatedModifiers {
     var destroyHook: js.UndefOr[Hooks.HookSingleFn] = js.undefined
     var domUnmountHook: js.UndefOr[Hooks.HookSingleFn] = js.undefined
 
-    @inline def assureProxies() = proxies getOrElse assign(new js.Array[VNodeProxy])(proxies = _)
-    @inline def assureNextModifiers() = nextModifiers getOrElse assign(new js.Array[StaticVDomModifier])(nextModifiers = _)
-    @inline def assureEmitters() = emitters getOrElse assign(js.Dictionary[js.Function1[dom.Event, Unit]]())(emitters = _)
-    @inline def assureAttrs() = attrs getOrElse assign(js.Dictionary[DataObject.AttrValue]())(attrs = _)
-    @inline def assureProps() = props getOrElse assign(js.Dictionary[DataObject.PropValue]())(props = _)
-    @inline def assureStyles() = styles getOrElse assign(js.Dictionary[DataObject.StyleValue]())(styles = _)
-    @inline def setSpecialStyle(styleName: String)(title: String, value: String): Unit = {
+    def assureProxies() = proxies getOrElse assign(new js.Array[VNodeProxy])(proxies = _)
+    def assureNextModifiers() = nextModifiers getOrElse assign(new js.Array[StaticVDomModifier])(nextModifiers = _)
+    def assureEmitters() = emitters getOrElse assign(js.Dictionary[js.Function1[dom.Event, Unit]]())(emitters = _)
+    def assureAttrs() = attrs getOrElse assign(js.Dictionary[DataObject.AttrValue]())(attrs = _)
+    def assureProps() = props getOrElse assign(js.Dictionary[DataObject.PropValue]())(props = _)
+    def assureStyles() = styles getOrElse assign(js.Dictionary[DataObject.StyleValue]())(styles = _)
+    def setSpecialStyle(styleName: String)(title: String, value: String): Unit = {
       val styles = assureStyles()
       styles.raw(styleName).fold {
         styles(styleName) = js.Dictionary[String](title -> value): DataObject.StyleValue
@@ -60,9 +60,9 @@ private[outwatch] object SeparatedModifiers {
         style.asInstanceOf[js.Dictionary[String]](title) = value
       }
     }
-    @inline def createHooksSingle[T](current: js.UndefOr[js.Function1[T, Unit]], hook: js.Function1[T, Unit]): js.Function1[T, Unit] =
+    def createHooksSingle[T](current: js.UndefOr[js.Function1[T, Unit]], hook: js.Function1[T, Unit]): js.Function1[T, Unit] =
       current.fold(hook)(current => { p => current(p); hook(p) })
-    @inline def createHooksPair[T](current: js.UndefOr[js.Function2[T, T, Unit]], hook: js.Function2[T, T, Unit]): js.Function2[T, T, Unit] =
+    def createHooksPair[T](current: js.UndefOr[js.Function2[T, T, Unit]], hook: js.Function2[T, T, Unit]): js.Function2[T, T, Unit] =
       current.fold(hook)(current => { (o,p) => current(o, p); hook(o, p) })
 
 
@@ -192,19 +192,19 @@ private[outwatch] class NativeModifiers(
 
 private[outwatch] object NativeModifiers {
 
-  @inline def from(appendModifiers: js.Array[_ <: VDomModifier])(implicit scheduler: Scheduler): NativeModifiers = from(appendModifiers, inStream = false)
-  @inline def fromInStream(appendModifiers: js.Array[_ <: VDomModifier])(implicit scheduler: Scheduler): NativeModifiers = from(appendModifiers, inStream = true)
+  def from(appendModifiers: js.Array[_ <: VDomModifier])(implicit scheduler: Scheduler): NativeModifiers = from(appendModifiers, inStream = false)
+  def fromInStream(appendModifiers: js.Array[_ <: VDomModifier])(implicit scheduler: Scheduler): NativeModifiers = from(appendModifiers, inStream = true)
 
   private def from(appendModifiers: js.Array[_ <: VDomModifier], inStream: Boolean)(implicit scheduler: Scheduler): NativeModifiers = {
     var lengths: js.UndefOr[js.Array[js.UndefOr[Int]]] = js.undefined
     var updaterObservables: js.UndefOr[js.Array[Observable[js.Array[StaticVDomModifier]]]] = js.undefined
     val modifiers = new js.Array[StaticVDomModifier]()
 
-    @inline def appendModifier(mod: StaticVDomModifier): Unit = {
+    def appendModifier(mod: StaticVDomModifier): Unit = {
       modifiers += mod
       lengths.foreach { _ += 1 }
     }
-    @inline def appendStream(stream: ValueObservable[js.Array[StaticVDomModifier]]): Unit = {
+    def appendStream(stream: ValueObservable[js.Array[StaticVDomModifier]]): Unit = {
       val lengthsArr = lengths getOrElse assign(new js.Array[js.UndefOr[Int]](modifiers.length))(lengths = _)
       val observables = updaterObservables getOrElse assign(new js.Array[Observable[js.Array[StaticVDomModifier]]]())(updaterObservables = _)
       val index = lengthsArr.length
@@ -356,8 +356,8 @@ private[outwatch] object NativeModifiers {
 }
 
 private object StyleKey {
-  @inline def delayed = "delayed"
-  @inline def remove = "remove"
-  @inline def destroy = "destroy"
+  def delayed = "delayed"
+  def remove = "remove"
+  def destroy = "destroy"
 }
 

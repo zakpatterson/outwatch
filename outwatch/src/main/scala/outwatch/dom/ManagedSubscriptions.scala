@@ -8,8 +8,8 @@ import org.scalajs.dom
 
 trait ManagedSubscriptions {
 
-  @inline def managed(subscription: () => Cancelable): VDomModifier = managedElement(_ => subscription())
-  @inline def managed(subscription: IO[Cancelable]): VDomModifier = managed(() => subscription.unsafeRunSync())
+  def managed(subscription: () => Cancelable): VDomModifier = managedElement(_ => subscription())
+  def managed(subscription: IO[Cancelable]): VDomModifier = managed(() => subscription.unsafeRunSync())
   def managed(sub1: IO[Cancelable], sub2: IO[Cancelable], subscriptions: IO[Cancelable]*): VDomModifier = {
     val composite = (sub1 :: sub2 :: subscriptions.toList).sequence.map(subs => CompositeCancelable(subs: _*))
     managed(composite)

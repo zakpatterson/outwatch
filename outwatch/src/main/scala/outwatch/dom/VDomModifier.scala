@@ -14,9 +14,9 @@ import scala.scalajs.js.JSConverters._
 sealed trait VDomModifier
 
 object VDomModifier {
-  @inline def empty: VDomModifier = EmptyModifier
+  def empty: VDomModifier = EmptyModifier
 
-  @inline def apply[T](t: T)(implicit as: AsVDomModifier[T]): VDomModifier = as.asVDomModifier(t)
+  def apply[T](t: T)(implicit as: AsVDomModifier[T]): VDomModifier = as.asVDomModifier(t)
 
   def apply(modifier: VDomModifier, modifier2: VDomModifier, modifiers: VDomModifier*): VDomModifier =
     CompositeModifier(js.Array(modifier, modifier2) ++ modifiers)
@@ -91,7 +91,7 @@ sealed trait BasicVNode extends VNode {
   def prepend(args: VDomModifier*): BasicVNode
   def thunk(key: Key.Value)(arguments: Any*)(renderFn: => VDomModifier): ThunkVNode = ThunkVNode(this, key, arguments.toJSArray, () => renderFn)
   def thunkConditional(key: Key.Value)(shouldRender: Boolean)(renderFn: => VDomModifier): ConditionalVNode = ConditionalVNode(this, key, shouldRender, () => renderFn)
-  @inline def thunkStatic(key: Key.Value)(renderFn: => VDomModifier): ConditionalVNode = thunkConditional(key)(false)(renderFn)
+  def thunkStatic(key: Key.Value)(renderFn: => VDomModifier): ConditionalVNode = thunkConditional(key)(false)(renderFn)
 }
 final case class ThunkVNode(baseNode: BasicVNode, key: Key.Value, arguments: js.Array[Any], renderFn: () => VDomModifier) extends VNode {
   def apply(args: VDomModifier*): ThunkVNode = copy(baseNode = baseNode(args))

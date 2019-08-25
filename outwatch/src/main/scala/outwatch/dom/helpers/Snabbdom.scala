@@ -19,7 +19,7 @@ object OutwatchTracing {
 }
 
 private[outwatch] object SnabbdomOps {
-  @inline private def createDataObject(modifiers: SeparatedModifiers, vNodeNS: js.UndefOr[String]): DataObject =
+  private def createDataObject(modifiers: SeparatedModifiers, vNodeNS: js.UndefOr[String]): DataObject =
     new DataObject {
       attrs = modifiers.attrs
       props = modifiers.props
@@ -37,10 +37,10 @@ private[outwatch] object SnabbdomOps {
       ns = vNodeNS
     }
 
-  @inline private def createProxy(modifiers: SeparatedModifiers, nodeType: String, vNodeId: js.UndefOr[Int], vNodeNS: js.UndefOr[String]): VNodeProxy = {
+  private def createProxy(modifiers: SeparatedModifiers, nodeType: String, vNodeId: js.UndefOr[Int], vNodeNS: js.UndefOr[String]): VNodeProxy = {
     val dataObject = createDataObject(modifiers, vNodeNS)
 
-    @inline def newProxy(childProxies: js.UndefOr[js.Array[VNodeProxy]], string: js.UndefOr[String]) = new VNodeProxy {
+    def newProxy(childProxies: js.UndefOr[js.Array[VNodeProxy]], string: js.UndefOr[String]) = new VNodeProxy {
       sel = nodeType
       data = dataObject
       children = childProxies

@@ -27,5 +27,5 @@ object ValueObservable {
     override def value: Option[T] = Some(initialValue)
   }
 
-  @inline def apply[F[_], T](stream: F[T])(implicit asValueObservable: AsValueObservable[F]): ValueObservable[T] = asValueObservable.as(stream)
+  def apply[F[_], T](stream: F[T])(implicit asValueObservable: AsValueObservable[F]): ValueObservable[T] = asValueObservable.as(stream)
 }
