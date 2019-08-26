@@ -499,19 +499,19 @@ implicit def obsToCancelable(obs: Obs): Cancelable = {
 ```
 
 ```scala mdoc:js
-implicit val ctx: Ctx.Owner = Ctx.Owner.safe()
-val showMessage = Var(false)
-val component = div(
-  Rx{
-    if( showMessage() )
-        div("Hello scala.rx")
-    else
-        button("show", onClick(true) --> showMessage)
-  },
-  managed(() => showMessage.foreach(println))
-)
-
-OutWatch.renderReplace("#example", div("yooo"))
+// implicit val ctx: Ctx.Owner = Ctx.Owner.safe()
+// val showMessage = Var(false)
+// val component = div(
+//   Rx{
+//     if( showMessage() )
+//         div("Hello scala.rx")
+//     else
+//         button("show", onClick(true) --> showMessage)
+//   },
+//   managed(() => showMessage.foreach(println))
+// )
+// 
+// OutWatch.renderReplace("#example", div("yooo"))
 ```
 
 ### debugging snabbdom patches
